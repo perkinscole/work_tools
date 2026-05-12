@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mr. P's Homeroom</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-theme="spring">
+  <div class="theme-decor" aria-hidden="true"></div>
+
+  <main class="page">
+    <header class="title-bar">
+      <h1 contenteditable="true" data-storage="title">Mr. P's Homeroom</h1>
+    </header>
+
+    <section class="card date-card">
+      <div class="card-header">Date / Cycle</div>
+      <div class="card-body">
+        <div id="date-line" class="date-line">&nbsp;</div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card announcements-card">
+        <div class="card-header">
+          Reminders / Announcements
+          <button id="edit-announcements" class="edit-btn" title="Edit announcements">edit</button>
+        </div>
+        <div class="card-body">
+          <ul id="announcements" contenteditable="false" data-storage="announcements">
+            <li>Welcome Back!</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card video-card">
+        <div class="card-header">
+          Relaxing Video
+          <button id="shuffle-video" class="edit-btn" title="Pick another video">shuffle</button>
+        </div>
+        <div class="card-body video-body">
+          <div class="video-frame">
+            <iframe
+              id="video-iframe"
+              src=""
+              title="Relaxing video"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen></iframe>
+          </div>
+        </div>
+      </section>
+
+      <section class="card quote-card">
+        <div class="card-header">
+          Quote of the Day
+          <button id="shuffle-quote" class="edit-btn" title="Pick another quote">shuffle</button>
+        </div>
+        <div class="card-body quote-body">
+          <blockquote>
+            <p id="quote-text">&nbsp;</p>
+            <footer>&mdash; <span id="quote-author"></span></footer>
+          </blockquote>
+        </div>
+      </section>
+    </div>
+
+    <footer class="page-footer">
+      <span id="theme-label"></span>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
