@@ -63,6 +63,7 @@ const CONFIG = {
   // To add: copy a video's ID from the URL (the part after v=) and add it
   // here. Verify the video allows embedding.
   VIDEOS: [
+    { id: "XZlkN5QPMAs", title: "Yosemite National Park 4K — Scenic Relaxation" },
     { id: "BHACKCNDMW8", title: "Flying Over Hawaii (4K)" },
     { id: "1ZYbU82GVz4", title: "Beautiful Relaxing Music" },
     { id: "qH5kP05kKfM", title: "Aerial Norway (4K)" },
