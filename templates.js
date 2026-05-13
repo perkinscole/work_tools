@@ -1,7 +1,7 @@
 // Template registry. Each template defines a CSS grid layout (named areas),
 // a theme class applied to <body>, and which slot ids it exposes.
 
-export const TEMPLATES = [
+var TEMPLATES = [
   {
     id: "spring",
     name: "Watercolor Spring",
@@ -173,6 +173,6 @@ export const TEMPLATES = [
   },
 ];
 
-export function getTemplate(id) {
+function getTemplate(id) {
   return TEMPLATES.find((t) => t.id === id) || TEMPLATES[0];
 }

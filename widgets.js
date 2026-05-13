@@ -3,14 +3,10 @@
 // editor(el, config, onChange) paints the config form. Call onChange(next)
 // after every edit so the page can save + re-render.
 
-import {
-  parseISODate,
-  startOfWeekMonday,
-  daysBetween,
-  ordinal,
-  dailyIndex,
-  escapeHtml,
-} from "./util.js";
+/* Depends on globals from util.js:
+ *   parseISODate, startOfWeekMonday, daysBetween, ordinal,
+ *   dailyIndex, escapeHtml
+ */
 
 /* -------------------------------------------------------------------- */
 /* Date / Cycle                                                          */
@@ -414,7 +410,7 @@ const customText = {
 /* Registry                                                              */
 /* -------------------------------------------------------------------- */
 
-export const WIDGETS = {
+var WIDGETS = {
   dateCycle,
   quote,
   video,
@@ -425,11 +421,11 @@ export const WIDGETS = {
   customText,
 };
 
-export const WIDGET_ORDER = [
+var WIDGET_ORDER = [
   "dateCycle", "announcements", "quote", "video",
   "todo", "weather", "image", "customText",
 ];
 
-export function getWidget(type) {
+function getWidget(type) {
   return WIDGETS[type] || null;
 }

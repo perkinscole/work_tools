@@ -6,8 +6,8 @@
 // State shape:
 //   { templateId, title, widgets: { [slotId]: { type, config } } }
 
-import { TEMPLATES, getTemplate } from "./templates.js";
-import { WIDGETS, WIDGET_ORDER, getWidget } from "./widgets.js";
+/* Depends on globals from templates.js (TEMPLATES, getTemplate)
+ * and widgets.js (WIDGETS, WIDGET_ORDER, getWidget). */
 
 const STORAGE_KEY = "homeroom-display-v2";
 
