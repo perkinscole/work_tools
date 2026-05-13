@@ -63,6 +63,7 @@ const CONFIG = {
   // To add: copy a video's ID from the URL (the part after v=) and add it
   // here. Verify the video allows embedding.
   VIDEOS: [
+    { id: "XZlkN5QPMAs", title: "Yosemite National Park 4K — Scenic Relaxation" },
     { id: "BHACKCNDMW8", title: "Flying Over Hawaii (4K)" },
     { id: "1ZYbU82GVz4", title: "Beautiful Relaxing Music" },
     { id: "qH5kP05kKfM", title: "Aerial Norway (4K)" },
@@ -140,7 +141,7 @@ function detectTheme(date) {
     { name: "newyear",      start: new Date(y - 1, 11, 28), end: new Date(y, 0, 2) },
     { name: "valentines",   start: new Date(y, 1, 10),  end: new Date(y, 1, 15) },
     { name: "stpatricks",   start: new Date(y, 2, 14),  end: new Date(y, 2, 18) },
-    { name: "independence", start: new Date(y, 6, 1),   end: new Date(y, 6, 5) },
+    { name: "independence", start: new Date(y, 6, 1),   end: new Date(y, 6, 6) },
     { name: "halloween",    start: new Date(y, 9, 20),  end: new Date(y, 9, 31) },
     {
       name: "thanksgiving",
