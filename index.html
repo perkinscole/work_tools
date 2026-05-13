@@ -10,6 +10,27 @@
   <div class="theme-decor" aria-hidden="true"></div>
 
   <main class="page">
+    <div class="toolbar">
+      <label class="toolbar-control">
+        <span class="toolbar-label">Theme</span>
+        <select id="theme-select">
+          <option value="auto">Auto (by date)</option>
+          <option value="spring">Spring</option>
+          <option value="summer">Summer</option>
+          <option value="fall">Autumn</option>
+          <option value="winter">Winter</option>
+          <option value="valentines">Valentine's Day</option>
+          <option value="stpatricks">St. Patrick's Day</option>
+          <option value="independence">Independence Day</option>
+          <option value="halloween">Halloween</option>
+          <option value="thanksgiving">Thanksgiving</option>
+          <option value="christmas">Christmas</option>
+          <option value="newyear">New Year</option>
+        </select>
+      </label>
+      <button id="fullscreen-btn" class="toolbar-btn" title="Toggle full screen">Full screen</button>
+    </div>
+
     <header class="title-bar">
       <h1 contenteditable="true" data-storage="title">Mr. P's Homeroom</h1>
     </header>
@@ -67,9 +88,39 @@
       </section>
     </div>
 
-    <footer class="page-footer">
-      <span id="theme-label"></span>
-    </footer>
+    <section class="card spotify-card">
+      <div class="card-header">
+        Music
+        <button id="edit-spotify" class="edit-btn" title="Paste a Spotify share link">edit</button>
+      </div>
+      <div class="card-body spotify-body">
+        <div id="spotify-empty" class="spotify-empty">
+          Click <strong>edit</strong> and paste any Spotify playlist, album, or track link.
+        </div>
+        <div id="spotify-editor" class="spotify-editor" hidden>
+          <input
+            id="spotify-input"
+            type="text"
+            placeholder="https://open.spotify.com/playlist/..."
+            autocomplete="off"
+            spellcheck="false" />
+          <button id="spotify-save" class="toolbar-btn">Save</button>
+          <button id="spotify-clear" class="toolbar-btn">Clear</button>
+        </div>
+        <iframe
+          id="spotify-iframe"
+          src=""
+          title="Spotify player"
+          width="100%"
+          height="232"
+          frameborder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+          hidden></iframe>
+      </div>
+    </section>
+
+    <footer class="page-footer"></footer>
   </main>
 
   <script src="app.js"></script>

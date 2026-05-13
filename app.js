@@ -258,9 +258,11 @@ function renderVideo() {
 }
 
 function renderTheme() {
-  const theme = detectTheme(state.date);
+  const override = getStored("themeOverride");
+  const theme = override || detectTheme(state.date);
   document.body.dataset.theme = theme;
-  document.getElementById("theme-label").textContent = `Theme: ${THEME_LABELS[theme] || theme}`;
+  const select = document.getElementById("theme-select");
+  if (select) select.value = override || "auto";
 }
 
 function renderAll() {
@@ -305,6 +307,103 @@ function setupEditable() {
  * Wire-up
  * ===================================================================== */
 
+function setupThemePicker() {
+  const select = document.getElementById("theme-select");
+  select.addEventListener("change", () => {
+    const v = select.value;
+    if (v === "auto") setStored("themeOverride", null);
+    else setStored("themeOverride", v);
+    renderTheme();
+  });
+}
+
+function setupFullscreen() {
+  const btn = document.getElementById("fullscreen-btn");
+  btn.addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(() => {});
+  });
+  document.addEventListener("fullscreenchange", () => {
+    btn.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen";
+  });
+}
+
+/* =====================================================================
+ * Spotify embed
+ * ===================================================================== */
+
+function parseSpotify(input) {
+  if (!input) return null;
+  const s = input.trim();
+  const uri = s.match(/^spotify:([a-z]+):([A-Za-z0-9]+)/);
+  if (uri) return { type: uri[1], id: uri[2] };
+  const url = s.match(/open\.spotify\.com\/(?:intl-[a-z-]+\/)?([a-z]+)\/([A-Za-z0-9]+)/);
+  if (url) return { type: url[1], id: url[2] };
+  return null;
+}
+
+function renderSpotify() {
+  const stored = getStored("spotify");
+  const iframe = document.getElementById("spotify-iframe");
+  const empty = document.getElementById("spotify-empty");
+  const parsed = parseSpotify(stored);
+  if (!parsed) {
+    iframe.hidden = true;
+    iframe.src = "";
+    empty.hidden = false;
+    return;
+  }
+  const src = `https://open.spotify.com/embed/${parsed.type}/${parsed.id}?utm_source=generator`;
+  if (iframe.dataset.src !== src) {
+    iframe.dataset.src = src;
+    iframe.src = src;
+  }
+  iframe.hidden = false;
+  empty.hidden = true;
+}
+
+function setupSpotify() {
+  const editor = document.getElementById("spotify-editor");
+  const input = document.getElementById("spotify-input");
+  const editBtn = document.getElementById("edit-spotify");
+  const saveBtn = document.getElementById("spotify-save");
+  const clearBtn = document.getElementById("spotify-clear");
+
+  editBtn.addEventListener("click", () => {
+    const showing = !editor.hidden;
+    editor.hidden = showing;
+    editBtn.classList.toggle("active", !showing);
+    editBtn.textContent = showing ? "edit" : "done";
+    if (!showing) {
+      input.value = getStored("spotify") || "";
+      input.focus();
+    }
+  });
+  saveBtn.addEventListener("click", () => {
+    const v = input.value.trim();
+    if (v && !parseSpotify(v)) {
+      input.focus();
+      input.select();
+      return;
+    }
+    setStored("spotify", v || null);
+    renderSpotify();
+    editor.hidden = true;
+    editBtn.classList.remove("active");
+    editBtn.textContent = "edit";
+  });
+  clearBtn.addEventListener("click", () => {
+    input.value = "";
+    setStored("spotify", null);
+    renderSpotify();
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") saveBtn.click();
+  });
+
+  renderSpotify();
+}
+
 function setupShuffleButtons() {
   document.getElementById("shuffle-quote").addEventListener("click", () => {
     state.quoteSalt += 1;
@@ -331,6 +430,9 @@ function scheduleMidnightRefresh() {
 document.addEventListener("DOMContentLoaded", () => {
   setupEditable();
   setupShuffleButtons();
+  setupThemePicker();
+  setupFullscreen();
+  setupSpotify();
   renderAll();
   scheduleMidnightRefresh();
 });

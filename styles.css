@@ -36,6 +36,42 @@ body {
   padding: 32px clamp(16px, 3vw, 40px) 24px;
 }
 
+/* ===== Toolbar ===== */
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.toolbar-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.65);
+}
+.toolbar-label { font-weight: 600; }
+.toolbar select,
+.toolbar-btn {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+.toolbar-btn:hover,
+.toolbar select:hover { background: #fff; }
+.toolbar-btn:focus-visible,
+.toolbar select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.18);
+}
+
 /* ===== Title bar ===== */
 .title-bar {
   display: flex;
@@ -190,6 +226,41 @@ body {
   font-weight: 700;
   text-align: right;
 }
+
+/* ===== Spotify ===== */
+.spotify-card { margin-top: 20px; }
+.spotify-body { padding: 14px 18px; }
+.spotify-empty {
+  text-align: center;
+  padding: 24px 8px;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 1rem;
+}
+.spotify-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.spotify-editor input {
+  flex: 1 1 280px;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: #fff;
+  color: #1a1a1a;
+}
+.spotify-editor input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.18);
+}
+#spotify-iframe { border-radius: 12px; display: block; }
+
+/* ===== Fullscreen ===== */
+:root:fullscreen .page { max-width: none; padding: 24px clamp(20px, 4vw, 60px); }
+:root:fullscreen body { overflow: auto; }
 
 /* ===== Footer ===== */
 .page-footer {
