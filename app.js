@@ -140,7 +140,7 @@ function detectTheme(date) {
     { name: "newyear",      start: new Date(y - 1, 11, 28), end: new Date(y, 0, 2) },
     { name: "valentines",   start: new Date(y, 1, 10),  end: new Date(y, 1, 15) },
     { name: "stpatricks",   start: new Date(y, 2, 14),  end: new Date(y, 2, 18) },
-    { name: "independence", start: new Date(y, 6, 1),   end: new Date(y, 6, 5) },
+    { name: "independence", start: new Date(y, 6, 1),   end: new Date(y, 6, 6) },
     { name: "halloween",    start: new Date(y, 9, 20),  end: new Date(y, 9, 31) },
     {
       name: "thanksgiving",
