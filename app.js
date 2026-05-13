@@ -251,6 +251,14 @@ function closePanel() {
 /* -------------------------------------------------------------------- */
 
 function setupToolbar() {
+  document.getElementById("edit-fab").addEventListener("click", () => {
+    mode = "edit";
+    const url = new URL(location.href);
+    url.searchParams.set("mode", "edit");
+    history.replaceState({}, "", url);
+    renderAll();
+  });
+
   document.getElementById("toggle-mode").addEventListener("click", () => {
     mode = mode === "edit" ? "view" : "edit";
     const url = new URL(location.href);
