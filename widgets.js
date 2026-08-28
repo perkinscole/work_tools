@@ -16,7 +16,7 @@ const dateCycle = {
   name: "Date & Cycle",
   description: "Today's date and which day of a rotating cycle (A/B, A/B/C, etc.).",
   defaults: {
-    anchorDate: "2025-09-02",
+    anchorDate: "2026-08-24",
     anchorLabel: "A",
     cycleLabels: ["A", "B", "C"],
   },
@@ -127,11 +127,14 @@ const quote = {
 /* -------------------------------------------------------------------- */
 
 const DEFAULT_VIDEOS = [
-  { id: "BHACKCNDMW8", title: "Flying Over Hawaii (4K)" },
+  { id: "jfKfPfyJRdk", title: "Lofi Girl · Beats to Relax/Study" },
+  { id: "rUxyKA_-grg", title: "Lofi Girl · Sleepy Beats" },
+  { id: "7NOSDKb0HlU", title: "Chillhop · Jazzhop Radio" },
+  { id: "HZuhbeRrM3M", title: "Rainforest Ambience" },
+  { id: "mPZkdNFkNps", title: "Rain on a Window" },
   { id: "lM02vNMRRB0", title: "Forest 4K Nature" },
+  { id: "BHACKCNDMW8", title: "Flying Over Hawaii (4K)" },
   { id: "qH5kP05kKfM", title: "Aerial Norway (4K)" },
-  { id: "eKFTSSKCzWA", title: "Peaceful Piano" },
-  { id: "DWcJFNfaw9c", title: "Relaxing Jazz" },
 ];
 
 const video = {
