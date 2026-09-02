@@ -9,7 +9,7 @@
 /* Depends on globals from templates.js (TEMPLATES, getTemplate)
  * and widgets.js (WIDGETS, WIDGET_ORDER, getWidget). */
 
-const STORAGE_KEY = "homeroom-display-v2";
+const STORAGE_KEY = "homeroom-display-v3";
 
 /* -------------------------------------------------------------------- */
 /* State                                                                 */
@@ -46,26 +46,30 @@ function deepClone(o) {
 }
 
 function fillDefaults(state) {
-  // Make sure every slot in the chosen template has an entry; fill blanks
-  // with the widget defaults so render never sees `undefined`.
+  // Ensure every slot in the chosen template has an entry, and drop entries
+  // for slots the current template doesn't expose. Widget defaults are NOT
+  // merged into saved state here — see effectiveConfig() — otherwise any
+  // later change to code defaults would be permanently shadowed by state
+  // saved on a first load.
   const tpl = getTemplate(state.templateId);
   for (const slot of tpl.slots) {
-    const cur = state.widgets[slot.id];
-    if (!cur) {
+    if (!state.widgets[slot.id]) {
       state.widgets[slot.id] = { type: null, config: {} };
-    } else if (cur.type && getWidget(cur.type)) {
-      state.widgets[slot.id] = {
-        type: cur.type,
-        config: { ...getWidget(cur.type).defaults, ...cur.config },
-      };
     }
   }
-  // Remove widgets for slots that don't exist in this template anymore.
   const validIds = new Set(tpl.slots.map((s) => s.id));
   for (const k of Object.keys(state.widgets)) {
     if (!validIds.has(k)) delete state.widgets[k];
   }
   return state;
+}
+
+// Merge live widget defaults with the user's saved overrides. Never persist
+// the result — save only the user's actual edits so defaults stay live.
+function effectiveConfig(widget) {
+  const def = widget && widget.type ? getWidget(widget.type) : null;
+  if (!def) return (widget && widget.config) || {};
+  return { ...def.defaults, ...(widget.config || {}) };
 }
 
 /* -------------------------------------------------------------------- */
@@ -105,7 +109,7 @@ function renderGrid() {
       slotEl.appendChild(inner);
 
       const def = getWidget(widget.type);
-      def.render(inner, widget.config);
+      def.render(inner, effectiveConfig(widget));
 
       // Slot label + change button (edit mode only)
       if (mode === "edit") {
@@ -132,7 +136,7 @@ function renderGrid() {
         const w = state.widgets[slot.id];
         w.config = { ...w.config, salt: (w.config.salt || 0) + 1 };
         persist();
-        def.render(inner, w.config);
+        def.render(inner, effectiveConfig(w));
       });
     } else {
       slotEl.classList.add("empty-slot");
@@ -211,7 +215,7 @@ function openSlotPicker(slotId) {
   panel.querySelectorAll("[data-type]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const type = btn.dataset.type;
-      state.widgets[slotId] = { type, config: deepClone(WIDGETS[type].defaults) };
+      state.widgets[slotId] = { type, config: {} };
       persist();
       renderAll();
       openSlotEditor(slotId);
@@ -234,7 +238,7 @@ function openSlotEditor(slotId) {
     <div class="panel-body"></div>
   `;
   panel.querySelector(".panel-close").addEventListener("click", closePanel);
-  def.editor(panel.querySelector(".panel-body"), w.config, (next) => {
+  def.editor(panel.querySelector(".panel-body"), effectiveConfig(w), (next) => {
     state.widgets[slotId] = { type: w.type, config: next };
     persist();
     renderGrid();
