@@ -19,10 +19,19 @@ function defaultState() {
   const tpl = TEMPLATES[0];
   return {
     templateId: tpl.id,
+    themeId: "auto",
+    textScale: "normal",
     title: tpl.defaults.title,
     widgets: deepClone(tpl.defaults.widgets),
   };
 }
+
+const TEXT_SCALES = {
+  small:  0.85,
+  normal: 1,
+  large:  1.2,
+  xlarge: 1.5,
+};
 
 function loadState() {
   try {
@@ -84,7 +93,14 @@ function persist() { saveState(state); }
 
 function renderTheme() {
   const tpl = getTemplate(state.templateId);
-  document.body.className = `${tpl.themeClass} mode-${mode}`;
+  const themeOverride = getTheme(state.themeId || "auto");
+  const themeClass = themeOverride.className || tpl.themeClass;
+  document.body.className = `${themeClass} mode-${mode}`;
+}
+
+function renderTextScale() {
+  const scale = TEXT_SCALES[state.textScale] || 1;
+  document.documentElement.style.setProperty("--text-scale", scale);
 }
 
 function renderGrid() {
@@ -164,7 +180,6 @@ function renderHeader() {
 function renderToolbar() {
   document.getElementById("toolbar").hidden = mode !== "edit";
   document.getElementById("toggle-mode").textContent = mode === "edit" ? "Done (view)" : "Edit";
-  // Template picker
   const sel = document.getElementById("template-picker");
   if (!sel.options.length) {
     for (const t of TEMPLATES) {
@@ -176,12 +191,28 @@ function renderToolbar() {
   }
   sel.value = state.templateId;
   document.getElementById("template-desc").textContent = getTemplate(state.templateId).description;
+
+  const themeSel = document.getElementById("theme-picker");
+  if (!themeSel.options.length) {
+    for (const t of THEMES) {
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = t.name;
+      themeSel.appendChild(opt);
+    }
+  }
+  themeSel.value = state.themeId || "auto";
+
+  const scaleSel = document.getElementById("text-scale-picker");
+  if (scaleSel) scaleSel.value = state.textScale || "normal";
+
   document.getElementById("title-input").value = state.title || "";
 }
 
 function renderAll() {
   state = fillDefaults(state);
   renderTheme();
+  renderTextScale();
   renderHeader();
   renderToolbar();
   renderGrid();
@@ -303,6 +334,27 @@ function setupToolbar() {
     state.widgets = deepClone(tpl.defaults.widgets);
     persist();
     renderAll();
+  });
+
+  document.getElementById("theme-picker").addEventListener("change", (e) => {
+    state.themeId = e.target.value;
+    persist();
+    renderTheme();
+  });
+
+  document.getElementById("text-scale-picker").addEventListener("change", (e) => {
+    state.textScale = e.target.value;
+    persist();
+    renderTextScale();
+  });
+
+  const fsBtn = document.getElementById("fullscreen-fab");
+  fsBtn.addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(() => {});
+  });
+  document.addEventListener("fullscreenchange", () => {
+    fsBtn.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen";
   });
 }
 

@@ -176,3 +176,28 @@ var TEMPLATES = [
 function getTemplate(id) {
   return TEMPLATES.find((t) => t.id === id) || TEMPLATES[0];
 }
+
+// Themes: separate from templates (layouts). "auto" means use the current
+// template's bundled themeClass; the rest override the visual skin
+// independent of layout.
+var THEMES = [
+  { id: "auto",         name: "Auto (from template)", className: null },
+  { id: "spring",       name: "Watercolor Spring",    className: "theme-spring" },
+  { id: "summer",       name: "Sunny Summer",         className: "theme-summer" },
+  { id: "autumn",       name: "Cozy Autumn",          className: "theme-autumn" },
+  { id: "winter",       name: "Snowy Winter",         className: "theme-winter" },
+  { id: "beach",        name: "Beach Day",            className: "theme-beach" },
+  { id: "forest",       name: "Forest",               className: "theme-forest" },
+  { id: "chalkboard",   name: "Chalkboard",           className: "theme-chalkboard" },
+  { id: "valentines",   name: "Valentine's Day",      className: "theme-valentines" },
+  { id: "stpatricks",   name: "St. Patrick's Day",    className: "theme-stpatricks" },
+  { id: "independence", name: "Independence Day",     className: "theme-independence" },
+  { id: "halloween",    name: "Halloween",            className: "theme-halloween" },
+  { id: "thanksgiving", name: "Thanksgiving",         className: "theme-thanksgiving" },
+  { id: "christmas",    name: "Christmas",            className: "theme-christmas" },
+  { id: "newyear",      name: "New Year",             className: "theme-newyear" },
+];
+
+function getTheme(id) {
+  return THEMES.find((t) => t.id === id) || THEMES[0];
+}

@@ -16,8 +16,21 @@
         <input type="text" id="title-input" />
       </label>
       <label class="toolbar-field">
-        <span>Template</span>
+        <span>Template (layout)</span>
         <select id="template-picker"></select>
+      </label>
+      <label class="toolbar-field">
+        <span>Theme (colors)</span>
+        <select id="theme-picker"></select>
+      </label>
+      <label class="toolbar-field">
+        <span>Text size</span>
+        <select id="text-scale-picker">
+          <option value="small">Small</option>
+          <option value="normal">Normal</option>
+          <option value="large">Large</option>
+          <option value="xlarge">Extra Large</option>
+        </select>
       </label>
       <span id="template-desc" class="toolbar-hint"></span>
       <button type="button" id="reset-btn" class="toolbar-btn">Reset</button>
@@ -33,6 +46,7 @@
   <aside id="side-panel" class="side-panel" hidden></aside>
 
   <button id="edit-fab" class="edit-fab" type="button">Edit</button>
+  <button id="fullscreen-fab" class="fullscreen-fab" type="button">Full screen</button>
 
   <script src="util.js"></script>
   <script src="templates.js"></script>

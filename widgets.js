@@ -196,19 +196,90 @@ const announcements = {
     `;
   },
   editor(el, config, onChange) {
+    let items = (config.items || []).slice();
+    let title = config.title || "Reminders";
+    const save = () => onChange({ ...config, title, items });
     el.innerHTML = `
       <label>Header
-        <input type="text" data-k="title" value="${escapeHtml(config.title || "Reminders")}" />
+        <input type="text" data-k="title" value="${escapeHtml(title)}" />
       </label>
-      <label>Items (one per line)
-        <textarea rows="8" data-k="items">${escapeHtml((config.items || []).join("\n"))}</textarea>
-      </label>
+      <div class="item-editor">
+        <div class="item-editor-label">Messages</div>
+        <ul class="item-list"></ul>
+        <button type="button" class="add-item">+ Add message</button>
+      </div>
     `;
-    el.querySelector('[data-k="title"]').addEventListener("change", (e) => {
-      onChange({ ...config, title: e.target.value });
+    const list = el.querySelector(".item-list");
+    const renderList = () => {
+      list.innerHTML = "";
+      items.forEach((item, i) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <input type="text" value="${escapeHtml(item)}" />
+          <button type="button" class="remove-item" title="Remove">&times;</button>
+        `;
+        const inp = li.querySelector("input");
+        inp.addEventListener("input", () => { items[i] = inp.value; save(); });
+        li.querySelector(".remove-item").addEventListener("click", () => {
+          items.splice(i, 1); renderList(); save();
+        });
+        list.appendChild(li);
+      });
+    };
+    renderList();
+    el.querySelector('[data-k="title"]').addEventListener("input", (e) => {
+      title = e.target.value; save();
     });
-    el.querySelector('[data-k="items"]').addEventListener("change", (e) => {
-      onChange({ ...config, items: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) });
+    el.querySelector(".add-item").addEventListener("click", () => {
+      items.push(""); renderList(); save();
+      const inputs = list.querySelectorAll("input");
+      inputs[inputs.length - 1].focus();
+    });
+  },
+};
+
+/* -------------------------------------------------------------------- */
+/* Spotify                                                               */
+/* -------------------------------------------------------------------- */
+
+function parseSpotify(input) {
+  if (!input) return null;
+  const s = String(input).trim();
+  const uri = s.match(/^spotify:([a-z]+):([A-Za-z0-9]+)/);
+  if (uri) return { type: uri[1], id: uri[2] };
+  const url = s.match(/open\.spotify\.com\/(?:intl-[a-z-]+\/)?([a-z]+)\/([A-Za-z0-9]+)/);
+  if (url) return { type: url[1], id: url[2] };
+  return null;
+}
+
+const spotify = {
+  name: "Spotify",
+  description: "Embed a Spotify playlist, album, or track.",
+  defaults: { share: "" },
+  render(el, config) {
+    const parsed = parseSpotify(config.share);
+    if (!parsed) {
+      el.innerHTML = `<div class="empty-state">No Spotify link set. Edit this widget and paste a share link.</div>`;
+      return;
+    }
+    const src = `https://open.spotify.com/embed/${encodeURIComponent(parsed.type)}/${encodeURIComponent(parsed.id)}?utm_source=generator`;
+    el.innerHTML = `
+      <iframe src="${src}" title="Spotify player"
+        class="spotify-frame"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy"
+        frameborder="0"></iframe>
+    `;
+  },
+  editor(el, config, onChange) {
+    el.innerHTML = `
+      <label>Spotify share link
+        <input type="text" data-k="share" value="${escapeHtml(config.share || "")}" placeholder="https://open.spotify.com/playlist/..." />
+      </label>
+      <p class="hint">Paste any Spotify URL or URI &mdash; playlist, album, track, show, episode, or artist.</p>
+    `;
+    el.querySelector("input").addEventListener("change", (e) => {
+      onChange({ ...config, share: e.target.value.trim() });
     });
   },
 };
@@ -417,6 +488,7 @@ var WIDGETS = {
   dateCycle,
   quote,
   video,
+  spotify,
   announcements,
   todo,
   weather,
@@ -425,7 +497,7 @@ var WIDGETS = {
 };
 
 var WIDGET_ORDER = [
-  "dateCycle", "announcements", "quote", "video",
+  "dateCycle", "announcements", "quote", "video", "spotify",
   "todo", "weather", "image", "customText",
 ];
 

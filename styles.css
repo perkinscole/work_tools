@@ -12,6 +12,7 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+:root { font-size: calc(16px * var(--text-scale, 1)); }
 body {
   font-family: var(--font-body, "Helvetica Neue", system-ui, sans-serif);
   background: var(--bg, #f6f3ec);
@@ -207,11 +208,9 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
 .widget-picker strong { font-size: 0.95rem; }
 .widget-picker span { font-size: 0.8rem; color: #666; }
 
-.edit-fab {
+.edit-fab, .fullscreen-fab {
   position: fixed;
-  bottom: 1rem; right: 1rem;
-  background: var(--accent, #4a6d3f);
-  color: #fff;
+  bottom: 1rem;
   border: none;
   padding: 0.7rem 1.2rem;
   border-radius: 999px;
@@ -219,7 +218,17 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
   box-shadow: 0 4px 14px rgba(0,0,0,0.2);
   z-index: 5;
 }
-.edit-fab:hover { filter: brightness(1.1); }
+.edit-fab {
+  right: 1rem;
+  background: var(--accent, #4a6d3f);
+  color: #fff;
+}
+.fullscreen-fab {
+  left: 1rem;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+}
+.edit-fab:hover, .fullscreen-fab:hover { filter: brightness(1.1); }
 .mode-edit .edit-fab { display: none; }
 
 /* 4. Widget components ------------------------------------- */
@@ -307,6 +316,58 @@ blockquote footer { font-size: 0.9rem; opacity: 0.8; }
 
 .custom-text-body { font-size: 1rem; }
 .empty-state { opacity: 0.6; font-size: 0.9rem; text-align: center; padding: 1rem; }
+
+.spotify-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 232px;
+  border: 0;
+  border-radius: 12px;
+  display: block;
+}
+
+/* Item editor (announcements + anything else with editable lists) */
+.item-editor { margin-bottom: 0.85rem; }
+.item-editor-label {
+  font-size: 0.85rem;
+  color: #444;
+  margin-bottom: 0.3rem;
+}
+.item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.item-list li {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.item-list input { flex: 1; }
+.item-list .remove-item {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.15);
+  color: #999;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  padding: 0 0.55rem;
+  line-height: 1;
+  height: 2rem;
+}
+.item-list .remove-item:hover { color: #c33; border-color: #c33; }
+.add-item {
+  background: #f7f5f0;
+  border: 1px dashed #c8b89c;
+  color: #666;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  width: 100%;
+}
+.add-item:hover { background: #efe9dd; }
 
 /* 5. Themes ------------------------------------------------ */
 
@@ -417,6 +478,158 @@ blockquote footer { font-size: 0.9rem; opacity: 0.8; }
 .theme-chalkboard .widget-title,
 .theme-chalkboard .date-line { color: var(--accent); }
 .theme-chalkboard .slot { color: var(--fg); }
+
+/* Sunny Summer */
+.theme-summer {
+  --bg: #fff9e6;
+  --fg: #3a3010;
+  --accent: #e08a00;
+  --accent-on: #fff;
+  --card-bg: rgba(255,255,255,0.92);
+  --card-border: rgba(224,138,0,0.22);
+  --font-display: "Georgia", serif;
+}
+.theme-summer .theme-decor {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(circle 30vw at 85% 10%, rgba(255,220,80,0.55), transparent 60%),
+    radial-gradient(ellipse 60vw 30vh at 50% 100%, rgba(120,200,240,0.28), transparent 65%);
+}
+
+/* Valentine's Day */
+.theme-valentines {
+  --bg: #fdf0f4;
+  --fg: #4a1428;
+  --accent: #c9184a;
+  --accent-on: #fff;
+  --card-bg: rgba(255,250,252,0.92);
+  --card-border: rgba(201,24,74,0.22);
+  --font-display: "Georgia", serif;
+}
+.theme-valentines .theme-decor {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 30vw 20vh at 10% 20%, rgba(255,150,180,0.5), transparent 65%),
+    radial-gradient(ellipse 30vw 20vh at 90% 80%, rgba(255,100,140,0.4), transparent 65%),
+    radial-gradient(circle 12vw at 60% 30%, rgba(255,200,215,0.5), transparent 70%);
+}
+
+/* St. Patrick's Day */
+.theme-stpatricks {
+  --bg: #eaf5ea;
+  --fg: #143d1f;
+  --accent: #128a3d;
+  --accent-on: #fff;
+  --card-bg: rgba(255,255,255,0.92);
+  --card-border: rgba(18,138,61,0.22);
+  --font-display: "Georgia", serif;
+}
+.theme-stpatricks .theme-decor {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 40vw 25vh at 0% 100%, rgba(18,138,61,0.32), transparent 65%),
+    radial-gradient(ellipse 40vw 25vh at 100% 0%, rgba(220,180,60,0.28), transparent 65%);
+}
+
+/* Independence Day */
+.theme-independence {
+  --bg: #f4f7fb;
+  --fg: #14213d;
+  --accent: #bf1e2e;
+  --accent-on: #fff;
+  --card-bg: rgba(255,255,255,0.93);
+  --card-border: rgba(20,33,61,0.22);
+  --font-display: "Georgia", serif;
+}
+.theme-independence .theme-decor {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(30,60,120,0.22) 0%, rgba(30,60,120,0) 30%),
+    linear-gradient(0deg, rgba(191,30,46,0.22) 0%, rgba(191,30,46,0) 30%);
+}
+
+/* Halloween */
+.theme-halloween {
+  --bg: #171126;
+  --fg: #f7ead3;
+  --accent: #ff8b1f;
+  --accent-on: #171126;
+  --card-bg: rgba(35,25,55,0.85);
+  --card-border: rgba(255,139,31,0.3);
+  --field-bg: #fff;
+  --font-display: "Georgia", serif;
+}
+.theme-halloween .theme-decor {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 45vw 30vh at 20% 100%, rgba(255,110,30,0.28), transparent 65%),
+    radial-gradient(ellipse 45vw 30vh at 80% 0%, rgba(140,50,180,0.28), transparent 65%);
+}
+.theme-halloween .page-title,
+.theme-halloween .widget-title,
+.theme-halloween .date-line { color: var(--accent); }
+
+/* Thanksgiving */
+.theme-thanksgiving {
+  --bg: #fbf1e2;
+  --fg: #3a2410;
+  --accent: #a04315;
+  --accent-on: #fff;
+  --card-bg: rgba(255,252,246,0.94);
+  --card-border: rgba(160,67,21,0.24);
+  --font-display: "Georgia", serif;
+}
+.theme-thanksgiving .theme-decor {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 40vw 30vh at 10% 10%, rgba(210,120,40,0.32), transparent 60%),
+    radial-gradient(ellipse 45vw 30vh at 90% 90%, rgba(150,80,30,0.28), transparent 60%);
+}
+
+/* Christmas */
+.theme-christmas {
+  --bg: #f4faf5;
+  --fg: #10331b;
+  --accent: #b7202a;
+  --accent-on: #fff;
+  --card-bg: rgba(255,255,255,0.93);
+  --card-border: rgba(16,51,27,0.22);
+  --font-display: "Georgia", serif;
+}
+.theme-christmas .theme-decor {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 40vw 25vh at 0% 0%, rgba(16,110,50,0.28), transparent 65%),
+    radial-gradient(ellipse 40vw 25vh at 100% 100%, rgba(183,32,42,0.24), transparent 65%),
+    radial-gradient(circle 4px at 25% 40%, #fff 50%, transparent 52%),
+    radial-gradient(circle 4px at 70% 20%, #fff 50%, transparent 52%),
+    radial-gradient(circle 5px at 85% 65%, #fff 50%, transparent 52%);
+}
+
+/* New Year */
+.theme-newyear {
+  --bg: #0f1020;
+  --fg: #f4f0e6;
+  --accent: #f2c14e;
+  --accent-on: #0f1020;
+  --card-bg: rgba(25,25,50,0.78);
+  --card-border: rgba(242,193,78,0.28);
+  --field-bg: #fff;
+  --font-display: "Georgia", serif;
+}
+.theme-newyear .theme-decor {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(circle 3px at 15% 25%, #f2c14e 50%, transparent 52%),
+    radial-gradient(circle 2px at 40% 55%, #f2c14e 50%, transparent 52%),
+    radial-gradient(circle 4px at 65% 15%, #f2c14e 50%, transparent 52%),
+    radial-gradient(circle 3px at 80% 45%, #fff 50%, transparent 52%),
+    radial-gradient(circle 2px at 25% 75%, #fff 50%, transparent 52%),
+    radial-gradient(ellipse 50vw 30vh at 50% 100%, rgba(242,193,78,0.12), transparent 70%);
+}
+.theme-newyear .page-title,
+.theme-newyear .widget-title,
+.theme-newyear .date-line { color: var(--accent); }
 
 @media (max-width: 800px) {
   .page-grid {
