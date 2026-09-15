@@ -120,6 +120,7 @@ function renderGrid() {
     const widget = state.widgets[slot.id];
     if (widget && widget.type && getWidget(widget.type)) {
       slotEl.classList.add("has-widget");
+      slotEl.classList.add(`size-${widget.size || "medium"}`);
       const inner = document.createElement("div");
       inner.className = "slot-inner";
       slotEl.appendChild(inner);
@@ -127,23 +128,36 @@ function renderGrid() {
       const def = getWidget(widget.type);
       def.render(inner, effectiveConfig(widget));
 
-      // Slot label + change button (edit mode only)
+      // Slot label + controls (edit mode only)
       if (mode === "edit") {
         const bar = document.createElement("div");
         bar.className = "slot-bar";
+        const currentSize = widget.size || "medium";
         bar.innerHTML = `
           <span class="slot-label">${slot.label}: ${def.name}</span>
+          <span class="slot-size" role="group" aria-label="Size">
+            <button class="size-btn ${currentSize === "small" ? "active" : ""}" data-size="small" type="button" title="Small">S</button>
+            <button class="size-btn ${currentSize === "medium" ? "active" : ""}" data-size="medium" type="button" title="Medium">M</button>
+            <button class="size-btn ${currentSize === "large" ? "active" : ""}" data-size="large" type="button" title="Large">L</button>
+          </span>
           <button class="slot-edit" type="button">edit</button>
-          <button class="slot-swap" type="button">change widget</button>
-          <button class="slot-clear" type="button">clear</button>
+          <button class="slot-swap" type="button">swap</button>
+          <button class="slot-remove" type="button" title="Remove widget">&times; remove</button>
         `;
         slotEl.prepend(bar);
         bar.querySelector(".slot-edit").addEventListener("click", () => openSlotEditor(slot.id));
         bar.querySelector(".slot-swap").addEventListener("click", () => openSlotPicker(slot.id));
-        bar.querySelector(".slot-clear").addEventListener("click", () => {
+        bar.querySelector(".slot-remove").addEventListener("click", () => {
           state.widgets[slot.id] = { type: null, config: {} };
           persist();
           renderAll();
+        });
+        bar.querySelectorAll(".size-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            state.widgets[slot.id].size = btn.dataset.size;
+            persist();
+            renderGrid();
+          });
         });
       }
 

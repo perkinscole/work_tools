@@ -129,12 +129,10 @@ const quote = {
 const DEFAULT_VIDEOS = [
   { id: "jfKfPfyJRdk", title: "Lofi Girl · Beats to Relax/Study" },
   { id: "rUxyKA_-grg", title: "Lofi Girl · Sleepy Beats" },
-  { id: "7NOSDKb0HlU", title: "Chillhop · Jazzhop Radio" },
-  { id: "HZuhbeRrM3M", title: "Rainforest Ambience" },
-  { id: "mPZkdNFkNps", title: "Rain on a Window" },
-  { id: "lM02vNMRRB0", title: "Forest 4K Nature" },
   { id: "BHACKCNDMW8", title: "Flying Over Hawaii (4K)" },
+  { id: "lM02vNMRRB0", title: "Forest 4K Nature" },
   { id: "qH5kP05kKfM", title: "Aerial Norway (4K)" },
+  { id: "eKFTSSKCzWA", title: "Peaceful Piano" },
 ];
 
 const video = {
@@ -354,23 +352,36 @@ const WEATHER_ICON = {
 
 const weather = {
   name: "Weather",
-  description: "Live local weather via Open-Meteo (no API key needed).",
-  defaults: { latitude: 42.3601, longitude: -71.0589, label: "Boston, MA", unit: "fahrenheit" },
+  description: "Live local weather + radar map (no API key needed).",
+  defaults: {
+    latitude: 42.3601, longitude: -71.0589, label: "Boston, MA",
+    unit: "fahrenheit", showRadar: true,
+  },
   render(el, config) {
-    el.innerHTML = `<div class="weather-loading">Loading weather&hellip;</div>`;
     const unit = config.unit === "celsius" ? "celsius" : "fahrenheit";
+    const u = unit === "celsius" ? "&deg;C" : "&deg;F";
+    const radarSrc = `https://embed.windy.com/embed2.html?lat=${encodeURIComponent(config.latitude)}&lon=${encodeURIComponent(config.longitude)}&zoom=8&level=surface&overlay=radar&menu=&message=&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`;
+    el.innerHTML = `
+      <div class="weather-panel">
+        <div class="weather-current">
+          <h3 class="widget-title">${escapeHtml(config.label || "Weather")}</h3>
+          <div class="weather-row">
+            <div class="weather-big">&hellip;</div>
+            <div class="weather-desc">Loading&hellip;</div>
+          </div>
+        </div>
+        ${config.showRadar !== false ? `<iframe class="weather-radar" src="${radarSrc}" title="Weather radar" frameborder="0" loading="lazy"></iframe>` : ""}
+      </div>
+    `;
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(config.latitude)}&longitude=${encodeURIComponent(config.longitude)}&current=temperature_2m,weather_code&temperature_unit=${unit}`;
     fetch(url).then((r) => r.json()).then((data) => {
       const c = data.current;
       if (!c) throw new Error("no data");
-      const u = unit === "celsius" ? "&deg;C" : "&deg;F";
-      el.innerHTML = `
-        <h3 class="widget-title">${escapeHtml(config.label || "Weather")}</h3>
-        <div class="weather-big">${Math.round(c.temperature_2m)}${u}</div>
-        <div class="weather-desc">${escapeHtml(WEATHER_ICON[c.weather_code] || "—")}</div>
-      `;
+      el.querySelector(".weather-big").innerHTML = `${Math.round(c.temperature_2m)}${u}`;
+      el.querySelector(".weather-desc").textContent = WEATHER_ICON[c.weather_code] || "—";
     }).catch(() => {
-      el.innerHTML = `<div class="weather-error">Weather unavailable.</div>`;
+      el.querySelector(".weather-big").textContent = "—";
+      el.querySelector(".weather-desc").textContent = "Weather unavailable.";
     });
   },
   editor(el, config, onChange) {
@@ -390,13 +401,19 @@ const weather = {
           <option value="celsius" ${config.unit === "celsius" ? "selected" : ""}>Celsius</option>
         </select>
       </label>
-      <p class="hint">Find lat/long by searching your city on Google Maps and right-clicking.</p>
+      <label class="checkbox-row">
+        <input type="checkbox" data-k="showRadar" ${config.showRadar !== false ? "checked" : ""} />
+        <span>Show radar map below temperature</span>
+      </label>
+      <p class="hint">Find lat/long by searching your city on Google Maps and right-clicking. Radar is powered by Windy.com.</p>
     `;
     el.querySelectorAll("input, select").forEach((inp) => {
       inp.addEventListener("change", () => {
         const next = { ...config };
         if (inp.dataset.k === "latitude" || inp.dataset.k === "longitude") {
           next[inp.dataset.k] = parseFloat(inp.value);
+        } else if (inp.type === "checkbox") {
+          next[inp.dataset.k] = inp.checked;
         } else {
           next[inp.dataset.k] = inp.value;
         }
