@@ -12,7 +12,6 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
-:root { font-size: calc(16px * var(--text-scale, 1)); }
 body {
   font-family: var(--font-body, "Helvetica Neue", system-ui, sans-serif);
   background: var(--bg, #f6f3ec);
@@ -57,11 +56,16 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
 
 .page-grid {
   display: grid;
+  grid-template-columns: repeat(var(--grid-cols, 4), 1fr);
+  grid-auto-rows: minmax(9rem, auto);
+  grid-auto-flow: dense;
   gap: 1rem;
   min-height: calc(100vh - 9rem);
 }
 
 .slot {
+  grid-column: span var(--colspan, 1);
+  grid-row: span var(--rowspan, 1);
   background: var(--card-bg, rgba(255,255,255,0.85));
   border: 1px solid var(--card-border, rgba(0,0,0,0.06));
   border-radius: 14px;
@@ -74,16 +78,32 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
   box-shadow: 0 4px 16px rgba(0,0,0,0.04);
 }
 
-.slot.empty-slot {
-  background: var(--empty-bg, rgba(255,255,255,0.5));
-  border-style: dashed;
-  border-color: var(--empty-border, rgba(0,0,0,0.15));
+/* Per-widget font scale — only text that uses `em` grows/shrinks; padding,
+ * borders, grid gaps, etc. stay in rem and the layout holds its shape. */
+.slot[data-font="small"]  .slot-inner { font-size: 0.85rem; }
+.slot[data-font="normal"] .slot-inner { font-size: 1rem; }
+.slot[data-font="large"]  .slot-inner { font-size: 1.2rem; }
+.slot[data-font="xlarge"] .slot-inner { font-size: 1.55rem; }
+
+.slot.add-widget-tile {
+  background: transparent;
+  border: 2px dashed var(--card-border, rgba(0,0,0,0.18));
+  box-shadow: none;
   align-items: center;
   justify-content: center;
-  color: var(--muted, #777);
+  padding: 0.5rem;
+  min-height: 9rem;
 }
-.empty-slot-inner { text-align: center; }
-.empty-slot-label { margin-bottom: 0.75rem; font-size: 0.9rem; }
+.add-widget-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  opacity: 0.7;
+  font-size: 1rem;
+  padding: 1rem;
+  width: 100%;
+}
+.add-widget-btn:hover { opacity: 1; }
 
 .slot-inner {
   flex: 1;
@@ -136,53 +156,59 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
 
 .slot-bar {
   display: none;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   margin: -1rem -1rem 0.75rem;
-  padding: 0.4rem 0.75rem;
-  background: rgba(0,0,0,0.5);
+  padding: 0.4rem 0.6rem;
+  background: rgba(0,0,0,0.55);
   color: #fff;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
 }
 .mode-edit .slot-bar { display: flex; }
-.slot-label { flex: 1; }
+.slot-label { font-weight: 600; margin-right: auto; }
+.slot-ctl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  background: rgba(0,0,0,0.3);
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+}
+.slot-ctl > label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  margin-right: 0.1rem;
+}
+.slot-ctl .size-btn {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  min-width: 1.4rem;
+}
+.slot-ctl .size-btn.active {
+  background: rgba(255,255,255,0.55);
+  color: #111;
+  font-weight: 700;
+}
 .slot-bar button {
   background: rgba(255,255,255,0.18);
   color: #fff;
   border: none;
-  padding: 0.25rem 0.55rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-}
-.slot-bar button:hover { background: rgba(255,255,255,0.32); }
-.slot-bar .slot-remove {
-  background: rgba(220,60,60,0.35);
-}
-.slot-bar .slot-remove:hover { background: rgba(220,60,60,0.6); }
-.slot-size {
-  display: inline-flex;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.slot-size .size-btn {
-  background: transparent;
-  border: none;
-  border-radius: 0;
   padding: 0.2rem 0.5rem;
-  font-size: 0.75rem;
-  min-width: 1.6rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
 }
-.slot-size .size-btn.active {
-  background: rgba(255,255,255,0.35);
-  font-weight: 700;
-}
+.slot-bar button:hover:not(:disabled) { background: rgba(255,255,255,0.32); }
+.slot-bar button:disabled { opacity: 0.3; cursor: not-allowed; }
+.slot-bar .slot-remove { background: rgba(220,60,60,0.4); }
+.slot-bar .slot-remove:hover { background: rgba(220,60,60,0.7); }
 .mode-edit .slot { outline: 1px dashed rgba(0,0,0,0.1); }
-
-/* Widget size classes (min-heights for the slot content area) */
-.slot.size-small  { min-height: 10rem; }
-.slot.size-medium { min-height: 18rem; }
-.slot.size-large  { min-height: 28rem; }
 
 .side-panel {
   position: fixed;
@@ -263,7 +289,7 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
 .widget-title {
   margin: 0 0 0.5rem;
   font-family: var(--font-display, "Georgia", serif);
-  font-size: 1.1rem;
+  font-size: 1.1em;
   color: var(--accent, #4a6d3f);
   letter-spacing: 0.02em;
 }
@@ -275,22 +301,22 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
 }
 .todo-list { list-style: none; padding-left: 0; }
 .todo-list label { display: flex; gap: 0.5rem; align-items: center; }
-.todo-list input[type="checkbox"] { width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+.todo-list input[type="checkbox"] { width: 1.1em; height: 1.1em; flex-shrink: 0; }
 .todo-list input:checked + span { text-decoration: line-through; opacity: 0.55; }
 
 .date-line {
   font-family: var(--font-display, "Georgia", serif);
-  font-size: clamp(1.2rem, 2vw, 1.7rem);
+  font-size: clamp(1.2em, 2vw, 1.7em);
   color: var(--accent, #4a6d3f);
 }
 .cycle-pill {
   display: inline-block;
   background: var(--accent, #4a6d3f);
   color: var(--accent-on, #fff);
-  padding: 0.15rem 0.7rem;
+  padding: 0.15em 0.7em;
   border-radius: 999px;
   font-size: 0.9em;
-  margin-left: 0.5rem;
+  margin-left: 0.5em;
   vertical-align: middle;
 }
 
@@ -298,8 +324,8 @@ blockquote {
   margin: 0; padding: 0;
   font-family: var(--font-quote, "Georgia", serif);
 }
-blockquote p { font-size: clamp(1.05rem, 1.5vw, 1.3rem); margin: 0 0 0.5rem; font-style: italic; }
-blockquote footer { font-size: 0.9rem; opacity: 0.8; }
+blockquote p { font-size: clamp(1.05em, 1.5vw, 1.3em); margin: 0 0 0.5rem; font-style: italic; }
+blockquote footer { font-size: 0.9em; opacity: 0.8; }
 
 .shuffle-btn {
   align-self: flex-end;
@@ -339,11 +365,11 @@ blockquote footer { font-size: 0.9rem; opacity: 0.8; }
 }
 .weather-big {
   font-family: var(--font-display, "Georgia", serif);
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(2em, 4vw, 3em);
   line-height: 1;
 }
-.weather-desc { font-size: 1rem; opacity: 0.85; }
-.weather-loading, .weather-error { opacity: 0.6; font-size: 0.95rem; }
+.weather-desc { font-size: 1em; opacity: 0.85; }
+.weather-loading, .weather-error { opacity: 0.6; font-size: 0.95em; }
 .weather-radar {
   flex: 1 1 auto;
   min-height: 180px;
@@ -366,10 +392,10 @@ blockquote footer { font-size: 0.9rem; opacity: 0.8; }
   margin: 0 auto;
   border-radius: 6px;
 }
-.image-caption { font-size: 0.85rem; opacity: 0.75; text-align: center; margin-top: 0.4rem; }
+.image-caption { font-size: 0.85em; opacity: 0.75; text-align: center; margin-top: 0.4rem; }
 
-.custom-text-body { font-size: 1rem; }
-.empty-state { opacity: 0.6; font-size: 0.9rem; text-align: center; padding: 1rem; }
+.custom-text-body { font-size: 1em; }
+.empty-state { opacity: 0.6; font-size: 0.9em; text-align: center; padding: 1rem; }
 
 .spotify-frame {
   width: 100%;

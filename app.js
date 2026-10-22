@@ -1,44 +1,49 @@
 // Homeroom Display — app shell.
-// Loads saved state from localStorage, renders a template grid with widgets,
-// and (in edit mode) shows controls to swap template / change widgets / edit
-// widget configs.
 //
-// State shape:
-//   { templateId, title, widgets: { [slotId]: { type, config } } }
+// State shape (v4):
+//   { templateId, themeId, title, widgets: [ ... ] }
+// Each widget: { id, type, config, colspan, rowspan, fontScale }
+//
+// The grid is fluid: columns come from the template, each widget picks its
+// own colspan/rowspan, and widgets flow with grid-auto-flow: dense so
+// removing one actually frees the space it occupied.
 
-/* Depends on globals from templates.js (TEMPLATES, getTemplate)
- * and widgets.js (WIDGETS, WIDGET_ORDER, getWidget). */
+/* Depends on globals from templates.js (TEMPLATES, getTemplate, THEMES,
+ * getTheme) and widgets.js (WIDGETS, WIDGET_ORDER, getWidget). */
 
-const STORAGE_KEY = "homeroom-display-v3";
+const STORAGE_KEY = "homeroom-display-v4";
 
 /* -------------------------------------------------------------------- */
 /* State                                                                 */
 /* -------------------------------------------------------------------- */
+
+function newWidgetId() {
+  return "w-" + Math.random().toString(36).slice(2, 10);
+}
 
 function defaultState() {
   const tpl = TEMPLATES[0];
   return {
     templateId: tpl.id,
     themeId: "auto",
-    textScale: "normal",
     title: tpl.defaults.title,
-    widgets: deepClone(tpl.defaults.widgets),
+    widgets: tpl.defaults.widgets.map((w) => ({
+      id: newWidgetId(),
+      fontScale: "normal",
+      ...w,
+      config: deepClone(w.config || {}),
+    })),
   };
 }
-
-const TEXT_SCALES = {
-  small:  0.85,
-  normal: 1,
-  large:  1.2,
-  xlarge: 1.5,
-};
 
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState();
     const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.templateId) return defaultState();
+    if (!parsed || !parsed.templateId || !Array.isArray(parsed.widgets)) {
+      return defaultState();
+    }
     return parsed;
   } catch {
     return defaultState();
@@ -50,31 +55,21 @@ function saveState(state) {
   catch { /* ignore */ }
 }
 
-function deepClone(o) {
-  return JSON.parse(JSON.stringify(o));
-}
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
 
 function fillDefaults(state) {
-  // Ensure every slot in the chosen template has an entry, and drop entries
-  // for slots the current template doesn't expose. Widget defaults are NOT
-  // merged into saved state here — see effectiveConfig() — otherwise any
-  // later change to code defaults would be permanently shadowed by state
-  // saved on a first load.
-  const tpl = getTemplate(state.templateId);
-  for (const slot of tpl.slots) {
-    if (!state.widgets[slot.id]) {
-      state.widgets[slot.id] = { type: null, config: {} };
-    }
-  }
-  const validIds = new Set(tpl.slots.map((s) => s.id));
-  for (const k of Object.keys(state.widgets)) {
-    if (!validIds.has(k)) delete state.widgets[k];
-  }
+  // Make sure every widget has required layout fields and an id.
+  state.widgets = (state.widgets || []).map((w) => ({
+    id: w.id || newWidgetId(),
+    type: w.type,
+    config: w.config || {},
+    colspan: w.colspan || 1,
+    rowspan: w.rowspan || 1,
+    fontScale: w.fontScale || "normal",
+  })).filter((w) => w.type && getWidget(w.type));
   return state;
 }
 
-// Merge live widget defaults with the user's saved overrides. Never persist
-// the result — save only the user's actual edits so defaults stay live.
 function effectiveConfig(widget) {
   const def = widget && widget.type ? getWidget(widget.type) : null;
   if (!def) return (widget && widget.config) || {};
@@ -87,7 +82,6 @@ function effectiveConfig(widget) {
 
 let state = fillDefaults(loadState());
 let mode = new URLSearchParams(location.search).get("mode") === "edit" ? "edit" : "view";
-let activeSlot = null;
 
 function persist() { saveState(state); }
 
@@ -98,95 +92,6 @@ function renderTheme() {
   document.body.className = `${themeClass} mode-${mode}`;
 }
 
-function renderTextScale() {
-  const scale = TEXT_SCALES[state.textScale] || 1;
-  document.documentElement.style.setProperty("--text-scale", scale);
-}
-
-function renderGrid() {
-  const tpl = getTemplate(state.templateId);
-  const grid = document.getElementById("page-grid");
-  grid.style.gridTemplateAreas = tpl.grid.areas;
-  grid.style.gridTemplateColumns = tpl.grid.columns;
-  grid.style.gridTemplateRows = tpl.grid.rows;
-
-  grid.innerHTML = "";
-  for (const slot of tpl.slots) {
-    const slotEl = document.createElement("section");
-    slotEl.className = "slot";
-    slotEl.style.gridArea = slot.id;
-    slotEl.dataset.slot = slot.id;
-
-    const widget = state.widgets[slot.id];
-    if (widget && widget.type && getWidget(widget.type)) {
-      slotEl.classList.add("has-widget");
-      slotEl.classList.add(`size-${widget.size || "medium"}`);
-      const inner = document.createElement("div");
-      inner.className = "slot-inner";
-      slotEl.appendChild(inner);
-
-      const def = getWidget(widget.type);
-      def.render(inner, effectiveConfig(widget));
-
-      // Slot label + controls (edit mode only)
-      if (mode === "edit") {
-        const bar = document.createElement("div");
-        bar.className = "slot-bar";
-        const currentSize = widget.size || "medium";
-        bar.innerHTML = `
-          <span class="slot-label">${slot.label}: ${def.name}</span>
-          <span class="slot-size" role="group" aria-label="Size">
-            <button class="size-btn ${currentSize === "small" ? "active" : ""}" data-size="small" type="button" title="Small">S</button>
-            <button class="size-btn ${currentSize === "medium" ? "active" : ""}" data-size="medium" type="button" title="Medium">M</button>
-            <button class="size-btn ${currentSize === "large" ? "active" : ""}" data-size="large" type="button" title="Large">L</button>
-          </span>
-          <button class="slot-edit" type="button">edit</button>
-          <button class="slot-swap" type="button">swap</button>
-          <button class="slot-remove" type="button" title="Remove widget">&times; remove</button>
-        `;
-        slotEl.prepend(bar);
-        bar.querySelector(".slot-edit").addEventListener("click", () => openSlotEditor(slot.id));
-        bar.querySelector(".slot-swap").addEventListener("click", () => openSlotPicker(slot.id));
-        bar.querySelector(".slot-remove").addEventListener("click", () => {
-          state.widgets[slot.id] = { type: null, config: {} };
-          persist();
-          renderAll();
-        });
-        bar.querySelectorAll(".size-btn").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            state.widgets[slot.id].size = btn.dataset.size;
-            persist();
-            renderGrid();
-          });
-        });
-      }
-
-      // Widgets can ask to shuffle (re-bump salt).
-      inner.addEventListener("widget-shuffle", () => {
-        const w = state.widgets[slot.id];
-        w.config = { ...w.config, salt: (w.config.salt || 0) + 1 };
-        persist();
-        def.render(inner, effectiveConfig(w));
-      });
-    } else {
-      slotEl.classList.add("empty-slot");
-      slotEl.innerHTML = `
-        <div class="empty-slot-inner">
-          <div class="empty-slot-label">${slot.label}</div>
-          ${mode === "edit"
-            ? `<button class="slot-add" type="button">+ add widget</button>`
-            : ""}
-        </div>
-      `;
-      if (mode === "edit") {
-        slotEl.querySelector(".slot-add").addEventListener("click", () => openSlotPicker(slot.id));
-      }
-    }
-
-    grid.appendChild(slotEl);
-  }
-}
-
 function renderHeader() {
   document.getElementById("page-title").textContent = state.title || "";
 }
@@ -194,6 +99,7 @@ function renderHeader() {
 function renderToolbar() {
   document.getElementById("toolbar").hidden = mode !== "edit";
   document.getElementById("toggle-mode").textContent = mode === "edit" ? "Done (view)" : "Edit";
+
   const sel = document.getElementById("template-picker");
   if (!sel.options.length) {
     for (const t of TEMPLATES) {
@@ -216,17 +122,125 @@ function renderToolbar() {
     }
   }
   themeSel.value = state.themeId || "auto";
-
-  const scaleSel = document.getElementById("text-scale-picker");
-  if (scaleSel) scaleSel.value = state.textScale || "normal";
-
   document.getElementById("title-input").value = state.title || "";
+}
+
+function buildSizeButtons(current, max, kind) {
+  // Returns inline HTML for 1..max buttons; kind is "col" or "row".
+  const buttons = [];
+  for (let i = 1; i <= max; i++) {
+    buttons.push(`<button class="size-btn ${current === i ? "active" : ""}" data-${kind}="${i}" type="button">${i}</button>`);
+  }
+  return buttons.join("");
+}
+
+function buildFontButtons(current) {
+  const sizes = [["small", "S"], ["normal", "M"], ["large", "L"], ["xlarge", "XL"]];
+  return sizes.map(([k, label]) =>
+    `<button class="size-btn ${current === k ? "active" : ""}" data-font="${k}" type="button">${label}</button>`
+  ).join("");
+}
+
+function renderGrid() {
+  const tpl = getTemplate(state.templateId);
+  const grid = document.getElementById("page-grid");
+  grid.style.setProperty("--grid-cols", tpl.columns);
+  grid.innerHTML = "";
+
+  state.widgets.forEach((widget, i) => {
+    const def = getWidget(widget.type);
+    if (!def) return;
+
+    const slotEl = document.createElement("section");
+    slotEl.className = "slot has-widget";
+    slotEl.style.setProperty("--colspan", Math.min(widget.colspan, tpl.columns));
+    slotEl.style.setProperty("--rowspan", widget.rowspan);
+    slotEl.dataset.font = widget.fontScale || "normal";
+    slotEl.dataset.widgetId = widget.id;
+
+    const inner = document.createElement("div");
+    inner.className = "slot-inner";
+    slotEl.appendChild(inner);
+    def.render(inner, effectiveConfig(widget));
+
+    if (mode === "edit") {
+      const bar = document.createElement("div");
+      bar.className = "slot-bar";
+      bar.innerHTML = `
+        <span class="slot-label">${def.name}</span>
+        <span class="slot-ctl"><label>w</label>${buildSizeButtons(widget.colspan, tpl.columns, "col")}</span>
+        <span class="slot-ctl"><label>h</label>${buildSizeButtons(widget.rowspan, 3, "row")}</span>
+        <span class="slot-ctl"><label>font</label>${buildFontButtons(widget.fontScale || "normal")}</span>
+        <button class="slot-move" data-dir="-1" type="button" title="Move earlier" ${i === 0 ? "disabled" : ""}>&larr;</button>
+        <button class="slot-move" data-dir="1" type="button" title="Move later" ${i === state.widgets.length - 1 ? "disabled" : ""}>&rarr;</button>
+        <button class="slot-edit" type="button">edit</button>
+        <button class="slot-swap" type="button">swap</button>
+        <button class="slot-remove" type="button" title="Remove widget">&times; remove</button>
+      `;
+      slotEl.prepend(bar);
+
+      bar.querySelector(".slot-edit").addEventListener("click", () => openWidgetEditor(widget.id));
+      bar.querySelector(".slot-swap").addEventListener("click", () => openWidgetPicker(widget.id));
+      bar.querySelector(".slot-remove").addEventListener("click", () => {
+        state.widgets = state.widgets.filter((w) => w.id !== widget.id);
+        persist();
+        renderAll();
+      });
+      bar.querySelectorAll(".slot-move").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const dir = parseInt(btn.dataset.dir, 10);
+          const j = i + dir;
+          if (j < 0 || j >= state.widgets.length) return;
+          const arr = state.widgets;
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+          persist();
+          renderGrid();
+        });
+      });
+      bar.querySelectorAll("[data-col]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          widget.colspan = parseInt(btn.dataset.col, 10);
+          persist();
+          renderGrid();
+        });
+      });
+      bar.querySelectorAll("[data-row]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          widget.rowspan = parseInt(btn.dataset.row, 10);
+          persist();
+          renderGrid();
+        });
+      });
+      bar.querySelectorAll("[data-font]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          widget.fontScale = btn.dataset.font;
+          persist();
+          renderGrid();
+        });
+      });
+    }
+
+    inner.addEventListener("widget-shuffle", () => {
+      widget.config = { ...widget.config, salt: (widget.config.salt || 0) + 1 };
+      persist();
+      def.render(inner, effectiveConfig(widget));
+    });
+
+    grid.appendChild(slotEl);
+  });
+
+  if (mode === "edit") {
+    const addEl = document.createElement("section");
+    addEl.className = "slot add-widget-tile";
+    addEl.innerHTML = `<button class="add-widget-btn" type="button">+ Add widget</button>`;
+    addEl.querySelector(".add-widget-btn").addEventListener("click", openAddPicker);
+    grid.appendChild(addEl);
+  }
 }
 
 function renderAll() {
   state = fillDefaults(state);
   renderTheme();
-  renderTextScale();
   renderHeader();
   renderToolbar();
   renderGrid();
@@ -236,13 +250,27 @@ function renderAll() {
 /* Side-panel: widget picker + widget editor                             */
 /* -------------------------------------------------------------------- */
 
-function openSlotPicker(slotId) {
-  activeSlot = slotId;
+let pickerMode = null; // "add" or "swap"
+let swapTargetId = null;
+
+function openAddPicker() {
+  pickerMode = "add";
+  swapTargetId = null;
+  showWidgetPicker("Add a widget");
+}
+
+function openWidgetPicker(widgetId) {
+  pickerMode = "swap";
+  swapTargetId = widgetId;
+  showWidgetPicker("Change widget type");
+}
+
+function showWidgetPicker(title) {
   const panel = document.getElementById("side-panel");
   panel.hidden = false;
   panel.innerHTML = `
     <div class="panel-header">
-      <h2>Pick a widget</h2>
+      <h2>${title}</h2>
       <button class="panel-close" type="button">&times;</button>
     </div>
     <ul class="widget-picker">
@@ -260,19 +288,28 @@ function openSlotPicker(slotId) {
   panel.querySelectorAll("[data-type]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const type = btn.dataset.type;
-      state.widgets[slotId] = { type, config: {} };
-      persist();
-      renderAll();
-      openSlotEditor(slotId);
+      if (pickerMode === "add") {
+        const w = { id: newWidgetId(), type, config: {}, colspan: 2, rowspan: 1, fontScale: "normal" };
+        state.widgets.push(w);
+        persist();
+        renderAll();
+        openWidgetEditor(w.id);
+      } else {
+        const w = state.widgets.find((x) => x.id === swapTargetId);
+        if (w) { w.type = type; w.config = {}; }
+        persist();
+        renderAll();
+        openWidgetEditor(swapTargetId);
+      }
     });
   });
 }
 
-function openSlotEditor(slotId) {
-  activeSlot = slotId;
-  const w = state.widgets[slotId];
-  if (!w || !w.type) return openSlotPicker(slotId);
+function openWidgetEditor(widgetId) {
+  const w = state.widgets.find((x) => x.id === widgetId);
+  if (!w) return;
   const def = getWidget(w.type);
+  if (!def) return;
   const panel = document.getElementById("side-panel");
   panel.hidden = false;
   panel.innerHTML = `
@@ -284,7 +321,7 @@ function openSlotEditor(slotId) {
   `;
   panel.querySelector(".panel-close").addEventListener("click", closePanel);
   def.editor(panel.querySelector(".panel-body"), effectiveConfig(w), (next) => {
-    state.widgets[slotId] = { type: w.type, config: next };
+    w.config = next;
     persist();
     renderGrid();
   });
@@ -292,7 +329,6 @@ function openSlotEditor(slotId) {
 
 function closePanel() {
   document.getElementById("side-panel").hidden = true;
-  activeSlot = null;
 }
 
 /* -------------------------------------------------------------------- */
@@ -320,19 +356,18 @@ function setupToolbar() {
 
   document.getElementById("template-picker").addEventListener("change", (e) => {
     const tpl = getTemplate(e.target.value);
-    state.templateId = tpl.id;
-    // Reset widgets to template defaults if user confirms.
-    if (confirm("Switch template? This will reset which widgets are placed in which slots (your widget content is preserved when slot names match).")) {
-      const preserved = { ...state.widgets };
-      state.widgets = deepClone(tpl.defaults.widgets);
-      for (const slot of tpl.slots) {
-        if (preserved[slot.id]) state.widgets[slot.id] = preserved[slot.id];
-      }
-      persist();
-      renderAll();
-    } else {
+    if (!confirm("Switch template? This replaces your current widgets with the template's starter set. (You can swap/resize/add after.)")) {
       e.target.value = state.templateId;
+      return;
     }
+    state.templateId = tpl.id;
+    state.title = tpl.defaults.title;
+    state.widgets = tpl.defaults.widgets.map((w) => ({
+      id: newWidgetId(), fontScale: "normal",
+      ...w, config: deepClone(w.config || {}),
+    }));
+    persist();
+    renderAll();
   });
 
   document.getElementById("title-input").addEventListener("input", (e) => {
@@ -345,7 +380,10 @@ function setupToolbar() {
     if (!confirm("Reset everything to the current template's defaults?")) return;
     const tpl = getTemplate(state.templateId);
     state.title = tpl.defaults.title;
-    state.widgets = deepClone(tpl.defaults.widgets);
+    state.widgets = tpl.defaults.widgets.map((w) => ({
+      id: newWidgetId(), fontScale: "normal",
+      ...w, config: deepClone(w.config || {}),
+    }));
     persist();
     renderAll();
   });
@@ -354,12 +392,6 @@ function setupToolbar() {
     state.themeId = e.target.value;
     persist();
     renderTheme();
-  });
-
-  document.getElementById("text-scale-picker").addEventListener("change", (e) => {
-    state.textScale = e.target.value;
-    persist();
-    renderTextScale();
   });
 
   const fsBtn = document.getElementById("fullscreen-fab");
@@ -379,7 +411,6 @@ function setupToolbar() {
 document.addEventListener("DOMContentLoaded", () => {
   setupToolbar();
   renderAll();
-  // Refresh date widget at midnight so the date rolls over.
   scheduleMidnightRefresh();
 });
 

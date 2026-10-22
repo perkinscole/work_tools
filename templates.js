@@ -1,5 +1,6 @@
-// Template registry. Each template defines a CSS grid layout (named areas),
-// a theme class applied to <body>, and which slot ids it exposes.
+// Templates define: a theme skin, a number of grid columns, and a starting
+// widget list. Widgets are an ORDERED ARRAY — order controls grid placement
+// and users can reorder, resize, add, and remove them freely in edit mode.
 
 var TEMPLATES = [
   {
@@ -7,57 +8,32 @@ var TEMPLATES = [
     name: "Watercolor Spring",
     description: "Soft greens, pinks, and watercolor florals.",
     themeClass: "theme-spring",
-    grid: {
-      areas: `"header header"
-              "a b"
-              "c c"`,
-      columns: "1fr 1fr",
-      rows: "auto 1fr auto",
-    },
-    slots: [
-      { id: "header", label: "Header strip" },
-      { id: "a", label: "Left panel" },
-      { id: "b", label: "Right panel" },
-      { id: "c", label: "Bottom panel" },
-    ],
+    columns: 4,
     defaults: {
       title: "Mr. P's Homeroom",
-      widgets: {
-        header: { type: "dateCycle", config: {} },
-        a: { type: "announcements", config: {} },
-        b: { type: "video", config: {} },
-        c: { type: "quote", config: {} },
-      },
+      widgets: [
+        { type: "dateCycle",     config: {}, colspan: 4, rowspan: 1 },
+        { type: "announcements", config: {}, colspan: 2, rowspan: 2 },
+        { type: "video",         config: {}, colspan: 2, rowspan: 2 },
+        { type: "quote",         config: {}, colspan: 4, rowspan: 1 },
+      ],
     },
   },
   {
     id: "autumn",
     name: "Cozy Autumn",
-    description: "Warm oranges and browns. Falling leaves.",
+    description: "Warm oranges and browns.",
     themeClass: "theme-autumn",
-    grid: {
-      areas: `"header header header"
-              "a b c"
-              "d d d"`,
-      columns: "1fr 1fr 1fr",
-      rows: "auto 1fr auto",
-    },
-    slots: [
-      { id: "header", label: "Header strip" },
-      { id: "a", label: "Column 1" },
-      { id: "b", label: "Column 2" },
-      { id: "c", label: "Column 3" },
-      { id: "d", label: "Bottom panel" },
-    ],
+    columns: 3,
     defaults: {
       title: "Good Morning",
-      widgets: {
-        header: { type: "dateCycle", config: {} },
-        a: { type: "announcements", config: {} },
-        b: { type: "todo", config: {} },
-        c: { type: "weather", config: {} },
-        d: { type: "quote", config: {} },
-      },
+      widgets: [
+        { type: "dateCycle",     config: {}, colspan: 3, rowspan: 1 },
+        { type: "announcements", config: {}, colspan: 1, rowspan: 2 },
+        { type: "todo",          config: {}, colspan: 1, rowspan: 2 },
+        { type: "weather",       config: {}, colspan: 1, rowspan: 2 },
+        { type: "quote",         config: {}, colspan: 3, rowspan: 1 },
+      ],
     },
   },
   {
@@ -65,27 +41,15 @@ var TEMPLATES = [
     name: "Snowy Winter",
     description: "Cool blues and whites with snowflakes.",
     themeClass: "theme-winter",
-    grid: {
-      areas: `"header header"
-              "a a"
-              "b c"`,
-      columns: "1fr 1fr",
-      rows: "auto auto 1fr",
-    },
-    slots: [
-      { id: "header", label: "Header strip" },
-      { id: "a", label: "Wide middle" },
-      { id: "b", label: "Bottom left" },
-      { id: "c", label: "Bottom right" },
-    ],
+    columns: 4,
     defaults: {
       title: "Morning Meeting",
-      widgets: {
-        header: { type: "dateCycle", config: {} },
-        a: { type: "video", config: {} },
-        b: { type: "announcements", config: {} },
-        c: { type: "quote", config: {} },
-      },
+      widgets: [
+        { type: "dateCycle",     config: {}, colspan: 4, rowspan: 1 },
+        { type: "video",         config: {}, colspan: 2, rowspan: 2 },
+        { type: "announcements", config: {}, colspan: 2, rowspan: 1 },
+        { type: "quote",         config: {}, colspan: 2, rowspan: 1 },
+      ],
     },
   },
   {
@@ -93,27 +57,15 @@ var TEMPLATES = [
     name: "Beach Day",
     description: "Teal water, sandy gold, palm motif.",
     themeClass: "theme-beach",
-    grid: {
-      areas: `"header header"
-              "a b"
-              "a c"`,
-      columns: "1fr 1fr",
-      rows: "auto 1fr 1fr",
-    },
-    slots: [
-      { id: "header", label: "Header strip" },
-      { id: "a", label: "Tall left" },
-      { id: "b", label: "Top right" },
-      { id: "c", label: "Bottom right" },
-    ],
+    columns: 2,
     defaults: {
       title: "Aloha, Homeroom!",
-      widgets: {
-        header: { type: "dateCycle", config: {} },
-        a: { type: "video", config: {} },
-        b: { type: "announcements", config: {} },
-        c: { type: "weather", config: {} },
-      },
+      widgets: [
+        { type: "dateCycle",     config: {}, colspan: 2, rowspan: 1 },
+        { type: "video",         config: {}, colspan: 1, rowspan: 2 },
+        { type: "announcements", config: {}, colspan: 1, rowspan: 1 },
+        { type: "weather",       config: {}, colspan: 1, rowspan: 1 },
+      ],
     },
   },
   {
@@ -121,27 +73,15 @@ var TEMPLATES = [
     name: "Forest",
     description: "Deep greens and earth tones. Calm.",
     themeClass: "theme-forest",
-    grid: {
-      areas: `"header header"
-              "a b"
-              "c b"`,
-      columns: "1fr 1fr",
-      rows: "auto 1fr 1fr",
-    },
-    slots: [
-      { id: "header", label: "Header strip" },
-      { id: "a", label: "Top left" },
-      { id: "b", label: "Tall right" },
-      { id: "c", label: "Bottom left" },
-    ],
+    columns: 2,
     defaults: {
       title: "Welcome, Class",
-      widgets: {
-        header: { type: "dateCycle", config: {} },
-        a: { type: "announcements", config: {} },
-        b: { type: "video", config: {} },
-        c: { type: "quote", config: {} },
-      },
+      widgets: [
+        { type: "dateCycle",     config: {}, colspan: 2, rowspan: 1 },
+        { type: "announcements", config: {}, colspan: 1, rowspan: 1 },
+        { type: "video",         config: {}, colspan: 1, rowspan: 2 },
+        { type: "quote",         config: {}, colspan: 1, rowspan: 1 },
+      ],
     },
   },
   {
@@ -149,26 +89,15 @@ var TEMPLATES = [
     name: "Chalkboard Classic",
     description: "Dark slate with chalk-style accents.",
     themeClass: "theme-chalkboard",
-    grid: {
-      areas: `"header header header"
-              "a b c"`,
-      columns: "1fr 1fr 1fr",
-      rows: "auto 1fr",
-    },
-    slots: [
-      { id: "header", label: "Header strip" },
-      { id: "a", label: "Column 1" },
-      { id: "b", label: "Column 2" },
-      { id: "c", label: "Column 3" },
-    ],
+    columns: 3,
     defaults: {
       title: "Today",
-      widgets: {
-        header: { type: "dateCycle", config: {} },
-        a: { type: "announcements", config: {} },
-        b: { type: "todo", config: {} },
-        c: { type: "quote", config: {} },
-      },
+      widgets: [
+        { type: "dateCycle",     config: {}, colspan: 3, rowspan: 1 },
+        { type: "announcements", config: {}, colspan: 1, rowspan: 2 },
+        { type: "todo",          config: {}, colspan: 1, rowspan: 2 },
+        { type: "quote",         config: {}, colspan: 1, rowspan: 2 },
+      ],
     },
   },
 ];
@@ -177,9 +106,6 @@ function getTemplate(id) {
   return TEMPLATES.find((t) => t.id === id) || TEMPLATES[0];
 }
 
-// Themes: separate from templates (layouts). "auto" means use the current
-// template's bundled themeClass; the rest override the visual skin
-// independent of layout.
 var THEMES = [
   { id: "auto",         name: "Auto (from template)", className: null },
   { id: "spring",       name: "Watercolor Spring",    className: "theme-spring" },
