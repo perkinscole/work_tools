@@ -54,56 +54,29 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
   color: var(--accent, #4a6d3f);
 }
 
-.page-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--grid-cols, 4), 1fr);
-  grid-auto-rows: minmax(9rem, auto);
-  grid-auto-flow: dense;
-  gap: 1rem;
-  min-height: calc(100vh - 9rem);
+/* Gridstack container */
+.grid-stack {
+  background: transparent;
+  min-height: calc(100vh - 10rem);
 }
 
-.slot {
-  grid-column: span var(--colspan, 1);
-  grid-row: span var(--rowspan, 1);
+/* Each grid item's content box — this is the card */
+.grid-stack-item-content {
   background: var(--card-bg, rgba(255,255,255,0.85));
   border: 1px solid var(--card-border, rgba(0,0,0,0.06));
   border-radius: 14px;
-  padding: 1rem;
-  position: relative;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0,0,0,0.04);
 }
 
-/* Per-widget font scale — only text that uses `em` grows/shrinks; padding,
- * borders, grid gaps, etc. stay in rem and the layout holds its shape. */
-.slot[data-font="small"]  .slot-inner { font-size: 0.85rem; }
-.slot[data-font="normal"] .slot-inner { font-size: 1rem; }
-.slot[data-font="large"]  .slot-inner { font-size: 1.2rem; }
-.slot[data-font="xlarge"] .slot-inner { font-size: 1.55rem; }
-
-.slot.add-widget-tile {
-  background: transparent;
-  border: 2px dashed var(--card-border, rgba(0,0,0,0.18));
-  box-shadow: none;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  min-height: 9rem;
-}
-.add-widget-btn {
-  background: transparent;
-  border: none;
-  color: inherit;
-  opacity: 0.7;
-  font-size: 1rem;
-  padding: 1rem;
-  width: 100%;
-}
-.add-widget-btn:hover { opacity: 1; }
+/* Per-widget font scale — only em-based text scales; padding stays. */
+.grid-stack-item[data-font="small"]  .slot-inner { font-size: 0.85rem; }
+.grid-stack-item[data-font="normal"] .slot-inner { font-size: 1rem; }
+.grid-stack-item[data-font="large"]  .slot-inner { font-size: 1.2rem; }
+.grid-stack-item[data-font="xlarge"] .slot-inner { font-size: 1.55rem; }
 
 .slot-inner {
   flex: 1;
@@ -112,7 +85,30 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
   flex-direction: column;
   gap: 0.5rem;
   overflow: auto;
+  padding: 1rem;
 }
+
+/* Edit-mode visual cue + resize handles */
+.mode-edit .grid-stack-item {
+  cursor: default;
+}
+.mode-edit .grid-stack-item-content {
+  outline: 1px dashed rgba(0,0,0,0.12);
+}
+.mode-edit .ui-resizable-handle {
+  background: rgba(74,109,63,0.25);
+  z-index: 2;
+}
+.mode-edit .ui-resizable-handle:hover {
+  background: rgba(74,109,63,0.55);
+}
+/* Make side handles chunkier so users notice they can grab */
+.mode-edit .ui-resizable-e, .mode-edit .ui-resizable-w { width: 6px; }
+.mode-edit .ui-resizable-n, .mode-edit .ui-resizable-s { height: 6px; }
+
+/* Floating controls visibility */
+.mode-view .ui-resizable-handle,
+.mode-view .grid-stack > .grid-stack-placeholder { display: none !important; }
 
 /* 3. Edit chrome ------------------------------------------- */
 
@@ -159,12 +155,14 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
-  margin: -1rem -1rem 0.75rem;
   padding: 0.4rem 0.6rem;
   background: rgba(0,0,0,0.55);
   color: #fff;
   font-size: 0.75rem;
+  cursor: grab;
+  user-select: none;
 }
+.slot-bar:active { cursor: grabbing; }
 .mode-edit .slot-bar { display: flex; }
 .slot-label { font-weight: 600; margin-right: auto; }
 .slot-ctl {
@@ -182,7 +180,7 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
   opacity: 0.7;
   margin-right: 0.1rem;
 }
-.slot-ctl .size-btn {
+.slot-ctl .font-btn {
   background: rgba(255,255,255,0.1);
   color: #fff;
   border: none;
@@ -190,8 +188,9 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
   padding: 0.1rem 0.4rem;
   font-size: 0.7rem;
   min-width: 1.4rem;
+  cursor: pointer;
 }
-.slot-ctl .size-btn.active {
+.slot-ctl .font-btn.active {
   background: rgba(255,255,255,0.55);
   color: #111;
   font-weight: 700;
@@ -203,12 +202,11 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   font-size: 0.72rem;
+  cursor: pointer;
 }
-.slot-bar button:hover:not(:disabled) { background: rgba(255,255,255,0.32); }
-.slot-bar button:disabled { opacity: 0.3; cursor: not-allowed; }
+.slot-bar button:hover { background: rgba(255,255,255,0.32); }
 .slot-bar .slot-remove { background: rgba(220,60,60,0.4); }
 .slot-bar .slot-remove:hover { background: rgba(220,60,60,0.7); }
-.mode-edit .slot { outline: 1px dashed rgba(0,0,0,0.1); }
 
 .side-panel {
   position: fixed;

@@ -1,17 +1,18 @@
-// Homeroom Display — app shell.
+// Homeroom Display — Gridstack-backed layout.
 //
-// State shape (v4):
+// State shape (v5):
 //   { templateId, themeId, title, widgets: [ ... ] }
-// Each widget: { id, type, config, colspan, rowspan, fontScale }
+// Each widget: { id, type, config, x, y, w, h, fontScale }
 //
-// The grid is fluid: columns come from the template, each widget picks its
-// own colspan/rowspan, and widgets flow with grid-auto-flow: dense so
-// removing one actually frees the space it occupied.
+// In edit mode, Gridstack handles drag-to-move (grab the slot header) and
+// drag-to-resize (grab any edge). float:false packs items upward, so
+// deleting one causes the rest to auto-fill the gap.
 
 /* Depends on globals from templates.js (TEMPLATES, getTemplate, THEMES,
- * getTheme) and widgets.js (WIDGETS, WIDGET_ORDER, getWidget). */
+ * getTheme) and widgets.js (WIDGETS, WIDGET_ORDER, getWidget), plus
+ * GridStack from the gridstack-all.js script tag. */
 
-const STORAGE_KEY = "homeroom-display-v4";
+const STORAGE_KEY = "homeroom-display-v5";
 
 /* -------------------------------------------------------------------- */
 /* State                                                                 */
@@ -58,13 +59,14 @@ function saveState(state) {
 function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
 
 function fillDefaults(state) {
-  // Make sure every widget has required layout fields and an id.
   state.widgets = (state.widgets || []).map((w) => ({
     id: w.id || newWidgetId(),
     type: w.type,
     config: w.config || {},
-    colspan: w.colspan || 1,
-    rowspan: w.rowspan || 1,
+    w: w.w || 2,
+    h: w.h || 2,
+    x: typeof w.x === "number" ? w.x : undefined,
+    y: typeof w.y === "number" ? w.y : undefined,
     fontScale: w.fontScale || "normal",
   })).filter((w) => w.type && getWidget(w.type));
   return state;
@@ -77,13 +79,18 @@ function effectiveConfig(widget) {
 }
 
 /* -------------------------------------------------------------------- */
-/* Render                                                                */
+/* App state (module-level)                                              */
 /* -------------------------------------------------------------------- */
 
 let state = fillDefaults(loadState());
 let mode = new URLSearchParams(location.search).get("mode") === "edit" ? "edit" : "view";
+let grid = null;
 
 function persist() { saveState(state); }
+
+/* -------------------------------------------------------------------- */
+/* Rendering                                                             */
+/* -------------------------------------------------------------------- */
 
 function renderTheme() {
   const tpl = getTemplate(state.templateId);
@@ -125,144 +132,173 @@ function renderToolbar() {
   document.getElementById("title-input").value = state.title || "";
 }
 
-function buildSizeButtons(current, max, kind) {
-  // Returns inline HTML for 1..max buttons; kind is "col" or "row".
-  const buttons = [];
-  for (let i = 1; i <= max; i++) {
-    buttons.push(`<button class="size-btn ${current === i ? "active" : ""}" data-${kind}="${i}" type="button">${i}</button>`);
-  }
-  return buttons.join("");
-}
+/* -------------------------------------------------------------------- */
+/* Grid item DOM                                                         */
+/* -------------------------------------------------------------------- */
 
 function buildFontButtons(current) {
   const sizes = [["small", "S"], ["normal", "M"], ["large", "L"], ["xlarge", "XL"]];
   return sizes.map(([k, label]) =>
-    `<button class="size-btn ${current === k ? "active" : ""}" data-font="${k}" type="button">${label}</button>`
+    `<button class="font-btn ${current === k ? "active" : ""}" data-font="${k}" type="button">${label}</button>`
   ).join("");
 }
 
-function renderGrid() {
-  const tpl = getTemplate(state.templateId);
-  const grid = document.getElementById("page-grid");
-  grid.style.setProperty("--grid-cols", tpl.columns);
-  grid.innerHTML = "";
+function renderWidgetContent(contentEl, widget) {
+  const def = getWidget(widget.type);
+  if (!def) return;
+  contentEl.innerHTML = "";
+  contentEl.classList.remove("gs-content-ready");
 
-  state.widgets.forEach((widget, i) => {
-    const def = getWidget(widget.type);
-    if (!def) return;
+  const bar = document.createElement("div");
+  bar.className = "slot-bar widget-drag-handle";
+  bar.innerHTML = `
+    <span class="slot-label">&#x2630; ${def.name}</span>
+    <span class="slot-ctl"><label>font</label>${buildFontButtons(widget.fontScale || "normal")}</span>
+    <button class="slot-edit" type="button">edit</button>
+    <button class="slot-swap" type="button">swap</button>
+    <button class="slot-remove" type="button" title="Remove">&times;</button>
+  `;
+  contentEl.appendChild(bar);
 
-    const slotEl = document.createElement("section");
-    slotEl.className = "slot has-widget";
-    slotEl.style.setProperty("--colspan", Math.min(widget.colspan, tpl.columns));
-    slotEl.style.setProperty("--rowspan", widget.rowspan);
-    slotEl.dataset.font = widget.fontScale || "normal";
-    slotEl.dataset.widgetId = widget.id;
+  const inner = document.createElement("div");
+  inner.className = "slot-inner";
+  contentEl.appendChild(inner);
+  def.render(inner, effectiveConfig(widget));
 
-    const inner = document.createElement("div");
-    inner.className = "slot-inner";
-    slotEl.appendChild(inner);
-    def.render(inner, effectiveConfig(widget));
-
-    if (mode === "edit") {
-      const bar = document.createElement("div");
-      bar.className = "slot-bar";
-      bar.innerHTML = `
-        <span class="slot-label">${def.name}</span>
-        <span class="slot-ctl"><label>w</label>${buildSizeButtons(widget.colspan, tpl.columns, "col")}</span>
-        <span class="slot-ctl"><label>h</label>${buildSizeButtons(widget.rowspan, 3, "row")}</span>
-        <span class="slot-ctl"><label>font</label>${buildFontButtons(widget.fontScale || "normal")}</span>
-        <button class="slot-move" data-dir="-1" type="button" title="Move earlier" ${i === 0 ? "disabled" : ""}>&larr;</button>
-        <button class="slot-move" data-dir="1" type="button" title="Move later" ${i === state.widgets.length - 1 ? "disabled" : ""}>&rarr;</button>
-        <button class="slot-edit" type="button">edit</button>
-        <button class="slot-swap" type="button">swap</button>
-        <button class="slot-remove" type="button" title="Remove widget">&times; remove</button>
-      `;
-      slotEl.prepend(bar);
-
-      bar.querySelector(".slot-edit").addEventListener("click", () => openWidgetEditor(widget.id));
-      bar.querySelector(".slot-swap").addEventListener("click", () => openWidgetPicker(widget.id));
-      bar.querySelector(".slot-remove").addEventListener("click", () => {
-        state.widgets = state.widgets.filter((w) => w.id !== widget.id);
-        persist();
-        renderAll();
-      });
-      bar.querySelectorAll(".slot-move").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const dir = parseInt(btn.dataset.dir, 10);
-          const j = i + dir;
-          if (j < 0 || j >= state.widgets.length) return;
-          const arr = state.widgets;
-          [arr[i], arr[j]] = [arr[j], arr[i]];
-          persist();
-          renderGrid();
-        });
-      });
-      bar.querySelectorAll("[data-col]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          widget.colspan = parseInt(btn.dataset.col, 10);
-          persist();
-          renderGrid();
-        });
-      });
-      bar.querySelectorAll("[data-row]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          widget.rowspan = parseInt(btn.dataset.row, 10);
-          persist();
-          renderGrid();
-        });
-      });
-      bar.querySelectorAll("[data-font]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          widget.fontScale = btn.dataset.font;
-          persist();
-          renderGrid();
-        });
-      });
-    }
-
-    inner.addEventListener("widget-shuffle", () => {
-      widget.config = { ...widget.config, salt: (widget.config.salt || 0) + 1 };
+  bar.querySelector(".slot-edit").addEventListener("click", (e) => {
+    e.stopPropagation();
+    openWidgetEditor(widget.id);
+  });
+  bar.querySelector(".slot-swap").addEventListener("click", (e) => {
+    e.stopPropagation();
+    openWidgetPicker(widget.id);
+  });
+  bar.querySelector(".slot-remove").addEventListener("click", (e) => {
+    e.stopPropagation();
+    removeWidget(widget.id);
+  });
+  bar.querySelectorAll(".font-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      widget.fontScale = btn.dataset.font;
+      const item = contentEl.closest(".grid-stack-item");
+      if (item) item.dataset.font = widget.fontScale;
+      bar.querySelectorAll(".font-btn").forEach((b) => b.classList.toggle("active", b === btn));
       persist();
-      def.render(inner, effectiveConfig(widget));
     });
-
-    grid.appendChild(slotEl);
   });
 
-  if (mode === "edit") {
-    const addEl = document.createElement("section");
-    addEl.className = "slot add-widget-tile";
-    addEl.innerHTML = `<button class="add-widget-btn" type="button">+ Add widget</button>`;
-    addEl.querySelector(".add-widget-btn").addEventListener("click", openAddPicker);
-    grid.appendChild(addEl);
+  inner.addEventListener("widget-shuffle", () => {
+    widget.config = { ...widget.config, salt: (widget.config.salt || 0) + 1 };
+    persist();
+    def.render(inner, effectiveConfig(widget));
+  });
+}
+
+function buildItemElement(widget, tpl) {
+  const el = document.createElement("div");
+  el.className = "grid-stack-item";
+  el.setAttribute("gs-id", widget.id);
+  el.setAttribute("gs-w", Math.min(widget.w || 2, tpl.columns));
+  el.setAttribute("gs-h", widget.h || 2);
+  if (typeof widget.x === "number") el.setAttribute("gs-x", widget.x);
+  if (typeof widget.y === "number") el.setAttribute("gs-y", widget.y);
+  el.dataset.font = widget.fontScale || "normal";
+
+  const content = document.createElement("div");
+  content.className = "grid-stack-item-content";
+  el.appendChild(content);
+  renderWidgetContent(content, widget);
+  return el;
+}
+
+/* -------------------------------------------------------------------- */
+/* Grid lifecycle                                                        */
+/* -------------------------------------------------------------------- */
+
+function buildGrid() {
+  if (grid) {
+    grid.destroy(false);
+    grid = null;
   }
+  const container = document.getElementById("page-grid");
+  container.className = "grid-stack";
+  container.innerHTML = "";
+
+  const tpl = getTemplate(state.templateId);
+  state.widgets.forEach((w) => {
+    container.appendChild(buildItemElement(w, tpl));
+  });
+
+  grid = GridStack.init({
+    column: tpl.columns,
+    cellHeight: 70,
+    margin: 10,
+    float: false,
+    animate: true,
+    disableDrag: mode !== "edit",
+    disableResize: mode !== "edit",
+    draggable: { handle: ".widget-drag-handle" },
+    resizable: { handles: "e, se, s, sw, w" },
+    minRow: 4,
+  }, container);
+
+  grid.on("change", onGridChange);
 }
 
-function renderAll() {
-  state = fillDefaults(state);
-  renderTheme();
-  renderHeader();
-  renderToolbar();
-  renderGrid();
+function onGridChange(_event, items) {
+  if (!items) return;
+  for (const item of items) {
+    const w = state.widgets.find((x) => x.id === item.id);
+    if (w) {
+      w.x = item.x;
+      w.y = item.y;
+      w.w = item.w;
+      w.h = item.h;
+    }
+  }
+  persist();
+}
+
+function removeWidget(id) {
+  if (!grid) return;
+  const el = document.querySelector(`.grid-stack-item[gs-id="${id}"]`);
+  if (el) grid.removeWidget(el);
+  state.widgets = state.widgets.filter((w) => w.id !== id);
+  persist();
+}
+
+function addWidget(type) {
+  const tpl = getTemplate(state.templateId);
+  const w = {
+    id: newWidgetId(), type, config: {},
+    w: Math.min(2, tpl.columns), h: 2, fontScale: "normal",
+  };
+  state.widgets.push(w);
+  const el = buildItemElement(w, tpl);
+  document.getElementById("page-grid").appendChild(el);
+  grid.makeWidget(el);
+  persist();
+  openWidgetEditor(w.id);
 }
 
 /* -------------------------------------------------------------------- */
-/* Side-panel: widget picker + widget editor                             */
+/* Side panel                                                            */
 /* -------------------------------------------------------------------- */
 
-let pickerMode = null; // "add" or "swap"
+let pickerMode = null;
 let swapTargetId = null;
-
-function openAddPicker() {
-  pickerMode = "add";
-  swapTargetId = null;
-  showWidgetPicker("Add a widget");
-}
 
 function openWidgetPicker(widgetId) {
   pickerMode = "swap";
   swapTargetId = widgetId;
   showWidgetPicker("Change widget type");
+}
+
+function openAddPicker() {
+  pickerMode = "add";
+  swapTargetId = null;
+  showWidgetPicker("Add a widget");
 }
 
 function showWidgetPicker(title) {
@@ -289,17 +325,17 @@ function showWidgetPicker(title) {
     btn.addEventListener("click", () => {
       const type = btn.dataset.type;
       if (pickerMode === "add") {
-        const w = { id: newWidgetId(), type, config: {}, colspan: 2, rowspan: 1, fontScale: "normal" };
-        state.widgets.push(w);
-        persist();
-        renderAll();
-        openWidgetEditor(w.id);
+        addWidget(type);
       } else {
         const w = state.widgets.find((x) => x.id === swapTargetId);
-        if (w) { w.type = type; w.config = {}; }
-        persist();
-        renderAll();
-        openWidgetEditor(swapTargetId);
+        if (w) {
+          w.type = type;
+          w.config = {};
+          const content = document.querySelector(`.grid-stack-item[gs-id="${swapTargetId}"] .grid-stack-item-content`);
+          if (content) renderWidgetContent(content, w);
+          persist();
+          openWidgetEditor(swapTargetId);
+        }
       }
     });
   });
@@ -323,7 +359,11 @@ function openWidgetEditor(widgetId) {
   def.editor(panel.querySelector(".panel-body"), effectiveConfig(w), (next) => {
     w.config = next;
     persist();
-    renderGrid();
+    const content = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .grid-stack-item-content`);
+    if (content) {
+      const inner = content.querySelector(".slot-inner");
+      if (inner) def.render(inner, effectiveConfig(w));
+    }
   });
 }
 
@@ -332,34 +372,26 @@ function closePanel() {
 }
 
 /* -------------------------------------------------------------------- */
-/* Toolbar wire-up                                                       */
+/* Toolbar                                                               */
 /* -------------------------------------------------------------------- */
 
 function setupToolbar() {
   document.getElementById("edit-fab").addEventListener("click", () => {
-    mode = "edit";
-    const url = new URL(location.href);
-    url.searchParams.set("mode", "edit");
-    history.replaceState({}, "", url);
-    renderAll();
+    setMode("edit");
   });
 
   document.getElementById("toggle-mode").addEventListener("click", () => {
-    mode = mode === "edit" ? "view" : "edit";
-    const url = new URL(location.href);
-    if (mode === "edit") url.searchParams.set("mode", "edit");
-    else url.searchParams.delete("mode");
-    history.replaceState({}, "", url);
-    closePanel();
-    renderAll();
+    setMode(mode === "edit" ? "view" : "edit");
   });
 
+  document.getElementById("add-widget-btn").addEventListener("click", openAddPicker);
+
   document.getElementById("template-picker").addEventListener("change", (e) => {
-    const tpl = getTemplate(e.target.value);
-    if (!confirm("Switch template? This replaces your current widgets with the template's starter set. (You can swap/resize/add after.)")) {
+    if (!confirm("Switch template? This replaces your current widgets with the template's starter set.")) {
       e.target.value = state.templateId;
       return;
     }
+    const tpl = getTemplate(e.target.value);
     state.templateId = tpl.id;
     state.title = tpl.defaults.title;
     state.widgets = tpl.defaults.widgets.map((w) => ({
@@ -404,6 +436,24 @@ function setupToolbar() {
   });
 }
 
+function setMode(next) {
+  mode = next;
+  const url = new URL(location.href);
+  if (mode === "edit") url.searchParams.set("mode", "edit");
+  else url.searchParams.delete("mode");
+  history.replaceState({}, "", url);
+  closePanel();
+  renderAll();
+}
+
+function renderAll() {
+  state = fillDefaults(state);
+  renderTheme();
+  renderHeader();
+  renderToolbar();
+  buildGrid();
+}
+
 /* -------------------------------------------------------------------- */
 /* Init                                                                  */
 /* -------------------------------------------------------------------- */
@@ -418,7 +468,7 @@ function scheduleMidnightRefresh() {
   const now = new Date();
   const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5);
   setTimeout(() => {
-    renderGrid();
+    buildGrid();
     scheduleMidnightRefresh();
   }, next - now);
 }

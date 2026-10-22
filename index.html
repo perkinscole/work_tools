@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Homeroom Display</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack.min.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="theme-spring mode-view">
@@ -24,6 +25,7 @@
         <select id="theme-picker"></select>
       </label>
       <span id="template-desc" class="toolbar-hint"></span>
+      <button type="button" id="add-widget-btn" class="toolbar-btn">+ Add widget</button>
       <button type="button" id="reset-btn" class="toolbar-btn">Reset</button>
       <button type="button" id="toggle-mode" class="toolbar-btn primary">Done (view)</button>
     </div>
@@ -31,7 +33,7 @@
 
   <main class="page">
     <h1 id="page-title" class="page-title">Mr. P's Homeroom</h1>
-    <div id="page-grid" class="page-grid"></div>
+    <div id="page-grid" class="grid-stack"></div>
   </main>
 
   <aside id="side-panel" class="side-panel" hidden></aside>
@@ -39,6 +41,7 @@
   <button id="edit-fab" class="edit-fab" type="button">Edit</button>
   <button id="fullscreen-fab" class="fullscreen-fab" type="button">Full screen</button>
 
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-all.js"></script>
   <script src="util.js"></script>
   <script src="templates.js"></script>
   <script src="widgets.js"></script>

@@ -1,6 +1,6 @@
-// Templates define: a theme skin, a number of grid columns, and a starting
-// widget list. Widgets are an ORDERED ARRAY — order controls grid placement
-// and users can reorder, resize, add, and remove them freely in edit mode.
+// Templates define a theme skin, a column count, and a starter widget list.
+// Each starter widget has gridstack w/h (optionally x/y). Users rearrange
+// freely in edit mode via drag and resize.
 
 var TEMPLATES = [
   {
@@ -12,10 +12,10 @@ var TEMPLATES = [
     defaults: {
       title: "Mr. P's Homeroom",
       widgets: [
-        { type: "dateCycle",     config: {}, colspan: 4, rowspan: 1 },
-        { type: "announcements", config: {}, colspan: 2, rowspan: 2 },
-        { type: "video",         config: {}, colspan: 2, rowspan: 2 },
-        { type: "quote",         config: {}, colspan: 4, rowspan: 1 },
+        { type: "dateCycle",     config: {}, w: 4, h: 1 },
+        { type: "announcements", config: {}, w: 2, h: 3 },
+        { type: "video",         config: {}, w: 2, h: 3 },
+        { type: "quote",         config: {}, w: 4, h: 2 },
       ],
     },
   },
@@ -28,11 +28,11 @@ var TEMPLATES = [
     defaults: {
       title: "Good Morning",
       widgets: [
-        { type: "dateCycle",     config: {}, colspan: 3, rowspan: 1 },
-        { type: "announcements", config: {}, colspan: 1, rowspan: 2 },
-        { type: "todo",          config: {}, colspan: 1, rowspan: 2 },
-        { type: "weather",       config: {}, colspan: 1, rowspan: 2 },
-        { type: "quote",         config: {}, colspan: 3, rowspan: 1 },
+        { type: "dateCycle",     config: {}, w: 3, h: 1 },
+        { type: "announcements", config: {}, w: 1, h: 3 },
+        { type: "todo",          config: {}, w: 1, h: 3 },
+        { type: "weather",       config: {}, w: 1, h: 3 },
+        { type: "quote",         config: {}, w: 3, h: 2 },
       ],
     },
   },
@@ -45,10 +45,10 @@ var TEMPLATES = [
     defaults: {
       title: "Morning Meeting",
       widgets: [
-        { type: "dateCycle",     config: {}, colspan: 4, rowspan: 1 },
-        { type: "video",         config: {}, colspan: 2, rowspan: 2 },
-        { type: "announcements", config: {}, colspan: 2, rowspan: 1 },
-        { type: "quote",         config: {}, colspan: 2, rowspan: 1 },
+        { type: "dateCycle",     config: {}, w: 4, h: 1 },
+        { type: "video",         config: {}, w: 2, h: 3 },
+        { type: "announcements", config: {}, w: 2, h: 2 },
+        { type: "quote",         config: {}, w: 2, h: 1 },
       ],
     },
   },
@@ -61,10 +61,10 @@ var TEMPLATES = [
     defaults: {
       title: "Aloha, Homeroom!",
       widgets: [
-        { type: "dateCycle",     config: {}, colspan: 2, rowspan: 1 },
-        { type: "video",         config: {}, colspan: 1, rowspan: 2 },
-        { type: "announcements", config: {}, colspan: 1, rowspan: 1 },
-        { type: "weather",       config: {}, colspan: 1, rowspan: 1 },
+        { type: "dateCycle",     config: {}, w: 2, h: 1 },
+        { type: "video",         config: {}, w: 1, h: 3 },
+        { type: "announcements", config: {}, w: 1, h: 2 },
+        { type: "weather",       config: {}, w: 1, h: 1 },
       ],
     },
   },
@@ -77,10 +77,10 @@ var TEMPLATES = [
     defaults: {
       title: "Welcome, Class",
       widgets: [
-        { type: "dateCycle",     config: {}, colspan: 2, rowspan: 1 },
-        { type: "announcements", config: {}, colspan: 1, rowspan: 1 },
-        { type: "video",         config: {}, colspan: 1, rowspan: 2 },
-        { type: "quote",         config: {}, colspan: 1, rowspan: 1 },
+        { type: "dateCycle",     config: {}, w: 2, h: 1 },
+        { type: "announcements", config: {}, w: 1, h: 2 },
+        { type: "video",         config: {}, w: 1, h: 3 },
+        { type: "quote",         config: {}, w: 1, h: 1 },
       ],
     },
   },
@@ -93,10 +93,10 @@ var TEMPLATES = [
     defaults: {
       title: "Today",
       widgets: [
-        { type: "dateCycle",     config: {}, colspan: 3, rowspan: 1 },
-        { type: "announcements", config: {}, colspan: 1, rowspan: 2 },
-        { type: "todo",          config: {}, colspan: 1, rowspan: 2 },
-        { type: "quote",         config: {}, colspan: 1, rowspan: 2 },
+        { type: "dateCycle",     config: {}, w: 3, h: 1 },
+        { type: "announcements", config: {}, w: 1, h: 3 },
+        { type: "todo",          config: {}, w: 1, h: 3 },
+        { type: "quote",         config: {}, w: 1, h: 3 },
       ],
     },
   },
