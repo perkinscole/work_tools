@@ -110,6 +110,30 @@ textarea { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size:
 .mode-view .ui-resizable-handle,
 .mode-view .grid-stack > .grid-stack-placeholder { display: none !important; }
 
+/* Fallback for when gridstack hasn't initialized items yet — keep them
+ * visible as a vertical stack so the page is never completely blank. */
+.grid-stack:not(.grid-stack-instance) .grid-stack-item {
+  display: block;
+  margin-bottom: 1rem;
+  min-height: 10rem;
+}
+
+.load-error {
+  padding: 1.5rem;
+  background: rgba(220,60,60,0.1);
+  border: 1px solid rgba(220,60,60,0.4);
+  border-radius: 8px;
+  color: #7a1515;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.load-error code {
+  background: rgba(0,0,0,0.08);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+}
+
 /* 3. Edit chrome ------------------------------------------- */
 
 .toolbar {

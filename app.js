@@ -217,11 +217,19 @@ function buildItemElement(widget, tpl) {
 /* -------------------------------------------------------------------- */
 
 function buildGrid() {
+  const container = document.getElementById("page-grid");
+  if (typeof GridStack === "undefined") {
+    container.innerHTML = `<div class="load-error">
+      <strong>Grid library didn't load.</strong><br/>
+      The <code>vendor/gridstack</code> files may be missing or blocked. Try a hard refresh (Ctrl/Cmd+Shift+R). If this is deployed on Netlify, confirm the <code>vendor/</code> folder is in the publish directory.
+    </div>`;
+    return;
+  }
+
   if (grid) {
     grid.destroy(false);
     grid = null;
   }
-  const container = document.getElementById("page-grid");
   container.className = "grid-stack";
   container.innerHTML = "";
 
